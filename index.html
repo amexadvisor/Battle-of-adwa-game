@@ -18,7 +18,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #120b06;
+    background: #8c7355;
     font-family: 'Georgia', serif;
   }
   #webgl-container {
@@ -31,8 +31,8 @@
     inset: 0;
     pointer-events: none;
     background:
-      radial-gradient(circle at 78% 14%, rgba(255, 232, 165, 0.25) 0%, transparent 48%),
-      radial-gradient(circle at center, transparent 52%, rgba(8, 4, 1, 0.84) 100%);
+      radial-gradient(circle at 78% 14%, rgba(255, 232, 165, 0.28) 0%, transparent 48%),
+      radial-gradient(circle at center, transparent 54%, rgba(12, 6, 2, 0.78) 100%);
     z-index: 2;
   }
 
@@ -49,12 +49,12 @@
     pointer-events: none;
   }
   .bars-box {
-    background: linear-gradient(135deg, rgba(18, 12, 8, 0.92), rgba(38, 26, 15, 0.8));
+    background: linear-gradient(135deg, rgba(18, 12, 8, 0.92), rgba(38, 26, 15, 0.82));
     border: 1.5px solid #c59b27;
     border-radius: 6px;
     padding: 7px 11px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.85);
-    min-width: 165px;
+    min-width: 162px;
   }
   .bar-label {
     font-size: 9.5px;
@@ -107,7 +107,7 @@
   .top-right-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     pointer-events: auto;
   }
   #score-display {
@@ -115,19 +115,19 @@
     font-weight: bold;
     color: #fff6db;
     text-shadow: 0 3px 12px #000, 0 0 15px rgba(212, 175, 55, 0.6);
-    margin-right: 4px;
+    margin-right: 2px;
   }
   .hud-icon-btn {
     height: 38px;
-    padding: 0 10px;
+    padding: 0 9px;
     border-radius: 7px;
     background: rgba(22, 14, 9, 0.92);
     border: 1.5px solid #c59b27;
     color: #ffd700;
     font-family: inherit;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: bold;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.7px;
     cursor: pointer;
     display: flex;
     justify-content: center;
@@ -294,9 +294,9 @@
     box-shadow: 0 6px 24px rgba(255, 215, 0, 0.45);
   }
 </style>
-<!-- Three.js + GLTFLoader for Optional GitHub 3D Models -->
+<!-- Only Core Three.js + Local animations.js (Zero fragile CDN plugins!) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="./animations.js" onerror="console.log('Using built-in animation engine fallback')"></script>
 </head>
 <body>
 
@@ -347,7 +347,7 @@
 
 <div class="overlay-modal" id="pause-modal">
   <h1>BATTLE PAUSED</h1>
-  <p>Tap the 🎥 CAM button in the top-right corner anytime to switch between Cinematic 3/4 Angle, Close GTA View, Wide Canyon View, or First-Person Saddle POV.</p>
+  <p>Tap 🎥 CAM in the top-right to switch between Hero 3/4 Profile, Close GTA View, Wide Canyon View, or First-Person Saddle View.</p>
   <button class="gold-action-btn" id="resume-btn">RESUME CHARGE</button>
 </div>
 
@@ -359,44 +359,101 @@
 
 <script>
 // ============================================================================
-// 0. GITHUB .GLB 3D ASSET LOADER CONFIGURATION (OPTIONAL EXTERNAL ANIMATIONS)
+// 0. BUILT-IN FALLBACK ANIMATION ENGINE (Guarantees zero black screen!)
 // ============================================================================
-// If you upload `assets/horse.glb` or `assets/menelik.glb` to your GitHub repo,
-// set USE_GITHUB_GLB_MODELS to true and the engine will load & animate them!
-const ASSET_CONFIG = {
-  USE_GITHUB_GLB_MODELS: false,
-  HORSE_GLB_URL: './assets/horse.glb',
-  MENELIK_GLB_URL: './assets/menelik.glb'
-};
-const gltfMixers = [];
+if (!window.ADWA_ANIMATIONS) {
+  window.ADWA_ANIMATIONS = {
+    lerp(a, b, t) { return a + (b - a) * t; },
+    smoothstep(t) { const c = Math.max(0, Math.min(1, t)); return c * c * (3 - 2 * c); },
+    applyHorseGallop(horse, phase, isRearing = false) {
+      if (!horse || !horse.bodyGroup) return;
+      horse.bodyGroup.position.y = (isRearing ? 2.35 : 2.06) + Math.sin(phase) * 0.15;
+      horse.bodyGroup.rotation.x = (isRearing ? -0.36 : 0) + Math.cos(phase) * 0.075;
+      horse.neckPivot.rotation.x = Math.sin(phase - 0.6) * 0.13;
+      horse.tailPivot.rotation.x = 0.22 + Math.cos(phase * 1.6) * 0.18;
+      const offsets = [0.0, 0.72, 2.85, 3.55];
+      for (let i = 0; i < horse.legs.length; i++) {
+        const leg = horse.legs[i];
+        const p = phase + offsets[i];
+        leg.hipJoint.rotation.x = Math.sin(p) * 0.74;
+        const lift = Math.max(0, Math.cos(p));
+        leg.lowerJoint.rotation.x = leg.isFront ? (-lift * 0.95 - 0.08) : (lift * 0.9 + 0.1);
+      }
+    },
+    applySwordCombatIK(joints, slashProgress, comboIndex, cycle) {
+      const { torsoPivot, rightShoulder, rightElbow, rightWrist, leftArm } = joints;
+      if (slashProgress <= 0) {
+        const b = Math.sin(cycle) * 0.055;
+        torsoPivot.rotation.set(0.06 + b * 0.4, -0.12, 0);
+        rightShoulder.rotation.set(-0.28 + b, 0.25, -0.32);
+        rightElbow.rotation.set(-0.68, 0.1, 0);
+        rightWrist.rotation.set(0.15, 0, 0);
+        leftArm.rotation.set(-0.2, 0.25, 0.15);
+        return;
+      }
+      const p = slashProgress;
+      const dir = (comboIndex % 2 === 0) ? 1 : -1;
+      if (p < 0.24) {
+        const w = this.smoothstep(p / 0.24);
+        torsoPivot.rotation.set(-0.08 * w, dir * 0.52 * w, 0);
+        rightShoulder.rotation.set(-1.15 * w, dir * 0.75 * w, -dir * 0.55 * w);
+        rightElbow.rotation.set(-1.2 * w, 0, 0);
+        rightWrist.rotation.set(-0.3 * w, 0, dir * 0.4 * w);
+      } else if (p < 0.68) {
+        const ease = 1 - Math.pow(1 - (p - 0.24) / 0.44, 3);
+        torsoPivot.rotation.set(this.lerp(-0.08, 0.22, ease), dir * this.lerp(0.52, -0.68, ease), 0);
+        rightShoulder.rotation.set(this.lerp(-1.15, 0.65, ease), dir * this.lerp(0.75, -1.25, ease), -0.25);
+        rightElbow.rotation.set(this.lerp(-1.2, -0.12, ease), 0, 0);
+        rightWrist.rotation.set(this.lerp(-0.3, 0.78, ease), 0, 0);
+      } else {
+        const r = this.smoothstep((p - 0.68) / 0.32);
+        torsoPivot.rotation.y *= (1 - r);
+        rightShoulder.rotation.x = this.lerp(0.65, -0.28, r);
+        rightShoulder.rotation.y = this.lerp(-dir * 1.25, 0.25, r);
+        rightElbow.rotation.x = this.lerp(-0.12, -0.68, r);
+        rightWrist.rotation.x = this.lerp(0.78, 0.15, r);
+      }
+    },
+    updateKabbaCloth(capeGeo, origPos, cycle) {
+      const cPos = capeGeo.attributes.position;
+      for (let i = 0; i < cPos.count; i++) {
+        const ox = origPos.getX(i), oy = origPos.getY(i), oz = origPos.getZ(i);
+        const drop = Math.min(1, Math.max(0, -oy / 1.58));
+        cPos.setZ(i, oz + Math.pow(drop, 1.32) * 0.82 + Math.sin(cycle * 2.2 - drop * 4.8 + ox * 3.2) * 0.13 * drop);
+        cPos.setY(i, oy + Math.pow(drop, 1.9) * 0.28);
+      }
+      cPos.needsUpdate = true;
+      capeGeo.computeVertexNormals();
+    }
+  };
+}
 
 // ============================================================================
-// 1. SCENE, CAMERA MODES & DRAMATIC LIGHTING
+// 1. MOBILE-SAFE WEBGL SCENE, CAMERA PRESETS & LIGHTING
 // ============================================================================
 const container = document.getElementById('webgl-container');
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x9b8267);
 scene.fog = new THREE.FogExp2(0x9b8267, 0.0105);
 
-const camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 340);
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+const camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 300);
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'default' });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.24;
 container.appendChild(renderer.domElement);
 
-// 4 User-Selectable Camera Presets (Including the exact 3/4 angle from Image 4!)
+// 4 User Camera Presets (Default = HERO 3/4 matching Reference Image 4!)
 const CAMERA_PRESETS = [
   {
     name: 'HERO 3/4',
-    desc: 'Cinematic 3/4 Angle (Shows Menelik Face & Kabba Profile)',
-    offsetX: 1.65,
-    offsetY: 4.55,
-    offsetZ: 7.6,
-    lookOffsetX: -0.25,
-    lookY: 2.75,
+    desc: 'Cinematic 3/4 Angle (Shows Menelik Face & Royal Kabba Profile)',
+    offsetX: 1.75,
+    offsetY: 4.5,
+    offsetZ: 7.4,
+    lookOffsetX: -0.3,
+    lookY: 2.8,
     lookZ: -14,
     showFgEars: true
   },
@@ -405,8 +462,8 @@ const CAMERA_PRESETS = [
     desc: 'Close Over-The-Shoulder Action Camera',
     offsetX: 0.55,
     offsetY: 4.35,
-    offsetZ: 6.4,
-    lookOffsetX: 0.1,
+    offsetZ: 6.3,
+    lookOffsetX: 0.05,
     lookY: 2.85,
     lookZ: -16,
     showFgEars: false
@@ -415,8 +472,8 @@ const CAMERA_PRESETS = [
     name: 'WIDE EPIC',
     desc: 'Panoramic Battlefield View (Shows Allied Ridge Warriors)',
     offsetX: 0.0,
-    offsetY: 6.4,
-    offsetZ: 11.2,
+    offsetY: 6.3,
+    offsetZ: 11.0,
     lookOffsetX: 0.0,
     lookY: 2.5,
     lookZ: -18,
@@ -424,7 +481,7 @@ const CAMERA_PRESETS = [
   },
   {
     name: '1ST PERSON',
-    desc: 'First-Person Rider POV Through the Horse Ears',
+    desc: 'First-Person Rider POV Between the Horse Ears',
     offsetX: 0.0,
     offsetY: 4.25,
     offsetZ: -0.35,
@@ -436,128 +493,126 @@ const CAMERA_PRESETS = [
 ];
 let currentCamIndex = 0;
 
-// Procedural Stormy Golden-Hour Adwa Sky Dome
 function createSkyDome() {
   const c = document.createElement('canvas');
-  c.width = 512; c.height = 512;
+  c.width = 256; c.height = 256;
   const ctx = c.getContext('2d');
-  const grad = ctx.createLinearGradient(0, 0, 0, 512);
+  const grad = ctx.createLinearGradient(0, 0, 0, 256);
   grad.addColorStop(0, '#323c45');
-  grad.addColorStop(0.32, '#736d60');
-  grad.addColorStop(0.66, '#d6b88c');
+  grad.addColorStop(0.35, '#736d60');
+  grad.addColorStop(0.68, '#d6b88c');
   grad.addColorStop(1, '#9b8267');
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 512, 512);
+  ctx.fillRect(0, 0, 256, 256);
 
-  const sun = ctx.createRadialGradient(380, 195, 12, 380, 195, 190);
+  const sun = ctx.createRadialGradient(190, 95, 6, 190, 95, 95);
   sun.addColorStop(0, 'rgba(255, 252, 232, 0.98)');
-  sun.addColorStop(0.38, 'rgba(255, 212, 130, 0.48)');
+  sun.addColorStop(0.4, 'rgba(255, 212, 130, 0.48)');
   sun.addColorStop(1, 'rgba(255, 200, 120, 0)');
   ctx.fillStyle = sun;
-  ctx.fillRect(0, 0, 512, 512);
+  ctx.fillRect(0, 0, 256, 256);
 
   const tex = new THREE.CanvasTexture(c);
-  const skyGeo = new THREE.SphereGeometry(270, 24, 16);
+  const skyGeo = new THREE.SphereGeometry(240, 20, 14);
   const skyMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false });
   scene.add(new THREE.Mesh(skyGeo, skyMat));
 }
 createSkyDome();
 
-const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x3d2e22, 0.78);
+const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x4a3728, 0.85);
 scene.add(hemiLight);
 
-const sunLight = new THREE.DirectionalLight(0xffe4b5, 1.7);
-sunLight.position.set(45, 72, -55);
+const sunLight = new THREE.DirectionalLight(0xffe4b5, 1.55);
+sunLight.position.set(38, 64, -45);
 sunLight.castShadow = true;
-sunLight.shadow.mapSize.width = 2048;
-sunLight.shadow.mapSize.height = 2048;
-const d = 42;
+// Mobile GPU safe 1024x1024 shadow map (prevents Android WebGL crash!)
+sunLight.shadow.mapSize.width = 1024;
+sunLight.shadow.mapSize.height = 1024;
+const d = 35;
 sunLight.shadow.camera.left = -d;
 sunLight.shadow.camera.right = d;
 sunLight.shadow.camera.top = d;
 sunLight.shadow.camera.bottom = -d;
 scene.add(sunLight);
 
-const stGeorgeLight = new THREE.PointLight(0xffe066, 0, 42);
+const stGeorgeLight = new THREE.PointLight(0xffe066, 0, 40);
 scene.add(stGeorgeLight);
 
 // ============================================================================
-// 2. PROCEDURAL TEXTURES (TAILORED KABBA EMBROIDERY, FACE DETAILS & ROCKS)
+// 2. PROCEDURAL TEXTURES (TAILORED KABBA GOLD EMBROIDERY & CANYON ROCKS)
 // ============================================================================
 function createTailoredKabbaTexture() {
   const c = document.createElement('canvas');
-  c.width = 512; c.height = 512;
+  c.width = 256; c.height = 256;
   const ctx = c.getContext('2d');
-  // Rich velvet black-charcoal fabric base
   ctx.fillStyle = '#12100e';
-  ctx.fillRect(0, 0, 512, 512);
+  ctx.fillRect(0, 0, 256, 256);
 
   ctx.strokeStyle = '#d4af37';
   ctx.fillStyle = '#ffd700';
 
-  // Golden collar border at the top (shoulder neckline)
-  ctx.lineWidth = 10;
+  // Collar gold trim
+  ctx.lineWidth = 6;
   ctx.beginPath();
-  ctx.moveTo(0, 24);
-  ctx.lineTo(512, 24);
+  ctx.moveTo(0, 12);
+  ctx.lineTo(256, 12);
   ctx.stroke();
 
-  // Intricate Ethiopian royal filigree down the back of the cloak (Image 4 match)
+  // Royal Ethiopian Sunburst Filigree on Back
   ctx.save();
-  ctx.translate(256, 200);
-  ctx.lineWidth = 4.5;
+  ctx.translate(128, 102);
+  ctx.lineWidth = 2.5;
   for (let i = 0; i < 12; i++) {
     ctx.rotate(Math.PI / 6);
     ctx.beginPath();
-    ctx.moveTo(0, 22);
-    ctx.lineTo(14, 78);
-    ctx.lineTo(0, 108);
-    ctx.lineTo(-14, 78);
+    ctx.moveTo(0, 12);
+    ctx.lineTo(7, 40);
+    ctx.lineTo(0, 54);
+    ctx.lineTo(-7, 40);
     ctx.closePath();
     ctx.stroke();
   }
   ctx.beginPath();
-  ctx.arc(0, 0, 24, 0, Math.PI * 2);
+  ctx.arc(0, 0, 12, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // Ornate golden hem border along the bottom curved edge
-  ctx.lineWidth = 8;
+  // Bottom hem intricate gold border
+  ctx.lineWidth = 5;
   ctx.beginPath();
-  ctx.moveTo(0, 465);
-  ctx.lineTo(512, 465);
+  ctx.moveTo(0, 232);
+  ctx.lineTo(256, 232);
   ctx.stroke();
 
-  ctx.lineWidth = 3.5;
-  for (let x = 0; x < 512; x += 32) {
+  ctx.lineWidth = 2;
+  for (let x = 0; x < 256; x += 16) {
     ctx.beginPath();
-    ctx.moveTo(x, 465);
-    ctx.lineTo(x + 16, 432);
-    ctx.lineTo(x + 32, 465);
-    ctx.lineTo(x + 16, 496);
+    ctx.moveTo(x, 232);
+    ctx.lineTo(x + 8, 216);
+    ctx.lineTo(x + 16, 232);
+    ctx.lineTo(x + 8, 248);
     ctx.closePath();
     ctx.stroke();
   }
-
   return new THREE.CanvasTexture(c);
 }
 
 function createCanyonRockTexture() {
   const c = document.createElement('canvas');
-  c.width = 512; c.height = 512;
+  c.width = 256; c.height = 256;
   const ctx = c.getContext('2d');
   ctx.fillStyle = '#735a43';
-  ctx.fillRect(0, 0, 512, 512);
+  ctx.fillRect(0, 0, 256, 256);
 
-  for (let i = 0; i < 6500; i++) {
+  for (let i = 0; i < 2500; i++) {
     const v = Math.random();
     ctx.fillStyle = v > 0.6 ? 'rgba(40, 28, 18, 0.45)' : (v > 0.25 ? 'rgba(148, 120, 92, 0.36)' : 'rgba(90, 102, 62, 0.28)');
-    ctx.fillRect(Math.random() * 512, Math.random() * 512, 2 + Math.random() * 8, 2 + Math.random() * 5);
+    ctx.fillRect(Math.random() * 256, Math.random() * 256, 2 + Math.random() * 5, 2 + Math.random() * 4);
   }
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(8, 24);
+  tex.repeat.set(6, 18);
   return tex;
 }
 
@@ -568,18 +623,18 @@ const mats = {
   whiteSteed: new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.45, metalness: 0.05 }),
   baySteed: new THREE.MeshStandardMaterial({ color: 0x4a2511, roughness: 0.52 }),
   hoofDark: new THREE.MeshStandardMaterial({ color: 0x1a1613, roughness: 0.8 }),
-  goldRoyal: new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.2, metalness: 0.9 }),
+  goldRoyal: new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.22, metalness: 0.88 }),
   crimsonTassel: new THREE.MeshStandardMaterial({ color: 0xa81414, roughness: 0.55 }),
   kabbaCloak: new THREE.MeshStandardMaterial({
     map: kabbaTex,
     roughness: 0.6,
-    metalness: 0.28,
+    metalness: 0.25,
     side: THREE.DoubleSide
   }),
   skinTone: new THREE.MeshStandardMaterial({ color: 0x52321e, roughness: 0.55 }),
   whiteKemis: new THREE.MeshStandardMaterial({ color: 0xf2ece1, roughness: 0.78 }),
-  forgedSteel: new THREE.MeshStandardMaterial({ color: 0xeaf2fa, roughness: 0.12, metalness: 0.95 }),
-  gashaShield: new THREE.MeshStandardMaterial({ color: 0x2b170b, roughness: 0.48, metalness: 0.32 }),
+  forgedSteel: new THREE.MeshStandardMaterial({ color: 0xeaf2fa, roughness: 0.14, metalness: 0.92 }),
+  gashaShield: new THREE.MeshStandardMaterial({ color: 0x2b170b, roughness: 0.48, metalness: 0.3 }),
   colonialKhaki: new THREE.MeshStandardMaterial({ color: 0x9c8b6e, roughness: 0.85 }),
   pithHelmet: new THREE.MeshStandardMaterial({ color: 0xd8cbb3, roughness: 0.75 }),
   rifleWood: new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.7 }),
@@ -600,19 +655,17 @@ const mats = {
 };
 
 // ============================================================================
-// 3. CRAGGY SOLODA CANYON TERRAIN & ALLIED ETHIOPIAN WARRIORS ON SLOPES
+// 3. CRAGGY SOLODA CANYON TERRAIN & ALLIED ETHIOPIAN WARRIORS
 // ============================================================================
 const terrainChunks = [];
 const alliedWarriors = [];
-const CHUNK_LEN = 120;
+const CHUNK_LEN = 110;
 
 function buildAlliedEthiopianWarrior() {
   const wGroup = new THREE.Group();
 
-  // White traditional Shemma tunic & trousers
   const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, 1.15, 8), mats.whiteKemis);
   torso.position.y = 1.35;
-  torso.castShadow = true;
   wGroup.add(torso);
 
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), mats.skinTone);
@@ -623,7 +676,6 @@ function buildAlliedEthiopianWarrior() {
   headband.position.y = 2.16;
   wGroup.add(headband);
 
-  // Sprinting Legs
   const legs = [];
   [-0.16, 0.16].forEach(lx => {
     const lp = new THREE.Group();
@@ -635,7 +687,6 @@ function buildAlliedEthiopianWarrior() {
     legs.push(lp);
   });
 
-  // Upraised Traditional Spear & Gasha Shield
   const spear = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.3, 6), mats.rifleWood);
   spear.position.set(0.32, 1.85, -0.1);
   spear.rotation.x = -0.65;
@@ -650,11 +701,18 @@ function buildAlliedEthiopianWarrior() {
   return wGroup;
 }
 
+const canyonSharedMat = new THREE.MeshStandardMaterial({
+  map: rockTex,
+  roughness: 0.92,
+  metalness: 0.04,
+  flatShading: true
+});
+
 function buildCanyonChunk(zOffset) {
   const chunkGroup = new THREE.Group();
   chunkGroup.position.z = zOffset;
 
-  const geo = new THREE.PlaneGeometry(110, CHUNK_LEN, 44, 48);
+  const geo = new THREE.PlaneGeometry(100, CHUNK_LEN, 32, 32);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
 
@@ -663,49 +721,36 @@ function buildCanyonChunk(zOffset) {
     const z = pos.getZ(i);
     const distFromCenter = Math.abs(x);
 
-    if (distFromCenter < 7.2) {
-      const roadBump = Math.sin(x * 1.5) * Math.cos(z * 0.8) * 0.14;
-      pos.setY(i, roadBump);
+    if (distFromCenter < 7.0) {
+      pos.setY(i, Math.sin(x * 1.5) * Math.cos(z * 0.8) * 0.12);
     } else {
-      const wallFactor = distFromCenter - 7.2;
+      const wallFactor = distFromCenter - 7.0;
       const ridgeNoise =
-        Math.sin(z * 0.18 + x * 0.25) * 3.2 +
-        Math.cos(z * 0.45 - x * 0.35) * 1.6 +
-        Math.sin(x * 0.9) * 0.8;
-      const height = Math.pow(wallFactor, 1.38) * 1.35 + Math.max(0, ridgeNoise);
-      pos.setY(i, height);
+        Math.sin(z * 0.18 + x * 0.25) * 3.0 +
+        Math.cos(z * 0.45 - x * 0.35) * 1.5;
+      pos.setY(i, Math.pow(wallFactor, 1.36) * 1.3 + Math.max(0, ridgeNoise));
     }
   }
   geo.computeVertexNormals();
 
-  const canyonMat = new THREE.MeshStandardMaterial({
-    map: rockTex,
-    roughness: 0.92,
-    metalness: 0.04,
-    flatShading: true
-  });
-  const mesh = new THREE.Mesh(geo, canyonMat);
+  const mesh = new THREE.Mesh(geo, canyonSharedMat);
   mesh.receiveShadow = true;
-  mesh.castShadow = true;
   chunkGroup.add(mesh);
 
-  // Embedded Boulders along Trail
   const boulderGeo = new THREE.DodecahedronGeometry(1, 1);
-  for (let i = 0; i < 36; i++) {
+  for (let i = 0; i < 28; i++) {
     const side = i % 2 === 0 ? -1 : 1;
-    const bMesh = new THREE.Mesh(boulderGeo, canyonMat);
-    const sx = 0.6 + Math.random() * 1.6;
-    const sy = 0.4 + Math.random() * 1.1;
-    const sz = 0.6 + Math.random() * 1.5;
+    const bMesh = new THREE.Mesh(boulderGeo, canyonSharedMat);
+    const sx = 0.6 + Math.random() * 1.5;
+    const sy = 0.4 + Math.random() * 1.0;
+    const sz = 0.6 + Math.random() * 1.4;
     bMesh.scale.set(sx, sy, sz);
     bMesh.position.set(
-      side * (6.2 + Math.random() * 6.5),
+      side * (6.0 + Math.random() * 6.0),
       sy * 0.45,
       (Math.random() - 0.5) * CHUNK_LEN
     );
     bMesh.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-    bMesh.castShadow = true;
-    bMesh.receiveShadow = true;
     chunkGroup.add(bMesh);
   }
 
@@ -717,10 +762,9 @@ for (let i = 0; i < 3; i++) {
   terrainChunks.push(buildCanyonChunk(-i * CHUNK_LEN));
 }
 
-// Spawn Allied Ethiopian Warriors charging along the left canyon ridge (Exact match to Image 4!)
 for (let i = 0; i < 8; i++) {
   const ally = buildAlliedEthiopianWarrior();
-  ally.position.set(-7.8 - (i % 3) * 1.8, 1.6 + (i % 3) * 1.3, -i * 16);
+  ally.position.set(-7.6 - (i % 3) * 1.7, 1.5 + (i % 3) * 1.2, -i * 15);
   scene.add(ally);
   alliedWarriors.push(ally);
 }
@@ -731,23 +775,23 @@ for (let i = 0; i < 8; i++) {
 function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   const root = new THREE.Group();
   const bodyGroup = new THREE.Group();
-  bodyGroup.position.y = 2.05;
+  bodyGroup.position.y = 2.06;
   root.add(bodyGroup);
 
-  const chest = new THREE.Mesh(new THREE.SphereGeometry(0.68, 16, 14), coatMat);
+  const chest = new THREE.Mesh(new THREE.SphereGeometry(0.68, 14, 12), coatMat);
   chest.scale.set(0.92, 1.05, 1.15);
   chest.position.set(0, 0.1, -0.95);
   chest.castShadow = true;
   bodyGroup.add(chest);
 
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.65, 1.65, 16), coatMat);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.65, 1.65, 14), coatMat);
   barrel.rotation.x = Math.PI / 2;
   barrel.scale.set(0.95, 1, 1.08);
   barrel.position.set(0, 0.14, -0.05);
   barrel.castShadow = true;
   bodyGroup.add(barrel);
 
-  const croup = new THREE.Mesh(new THREE.SphereGeometry(0.69, 16, 14), coatMat);
+  const croup = new THREE.Mesh(new THREE.SphereGeometry(0.69, 14, 12), coatMat);
   croup.scale.set(0.96, 1.08, 1.22);
   croup.position.set(0, 0.18, 0.92);
   croup.castShadow = true;
@@ -755,7 +799,7 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
 
   if (isRoyalSteed) {
     const saddlePad = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.68, 0.72, 1.25, 16, 1, false, -Math.PI * 0.65, Math.PI * 1.3),
+      new THREE.CylinderGeometry(0.68, 0.72, 1.25, 14, 1, false, -Math.PI * 0.65, Math.PI * 1.3),
       mats.crimsonTassel
     );
     saddlePad.rotation.z = Math.PI / 2;
@@ -763,14 +807,14 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
     saddlePad.position.set(0, 0.22, -0.05);
     bodyGroup.add(saddlePad);
 
-    const harnessStrap = new THREE.Mesh(new THREE.TorusGeometry(0.69, 0.045, 8, 20, Math.PI), mats.goldRoyal);
+    const harnessStrap = new THREE.Mesh(new THREE.TorusGeometry(0.69, 0.045, 8, 18, Math.PI), mats.goldRoyal);
     harnessStrap.rotation.x = 0.35;
     harnessStrap.position.set(0, 0.15, 0.88);
     bodyGroup.add(harnessStrap);
 
     [-0.56, -0.32, 0.32, 0.56].forEach((tx) => {
       const zOff = Math.abs(tx) > 0.4 ? 0.65 : 1.05;
-      const med = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.04, 12), mats.goldRoyal);
+      const med = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.04, 10), mats.goldRoyal);
       med.rotation.z = Math.PI / 2;
       med.position.set(tx > 0 ? tx + 0.1 : tx - 0.1, 0.18, zOff);
       bodyGroup.add(med);
@@ -785,15 +829,14 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   neckPivot.position.set(0, 0.35, -1.25);
   bodyGroup.add(neckPivot);
 
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.52, 1.35, 14), coatMat);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.52, 1.35, 12), coatMat);
   neck.position.set(0, 0.52, -0.32);
   neck.rotation.x = -0.58;
-  neck.castShadow = true;
   neckPivot.add(neck);
 
-  for (let m = 0; m < 6; m++) {
-    const locks = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.45, 6), coatMat);
-    locks.position.set(0, 0.25 + m * 0.16, -0.05 - m * 0.08);
+  for (let m = 0; m < 5; m++) {
+    const locks = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.42, 6), coatMat);
+    locks.position.set(0, 0.25 + m * 0.18, -0.05 - m * 0.08);
     locks.rotation.x = -0.9;
     neckPivot.add(locks);
   }
@@ -803,24 +846,24 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   headGroup.rotation.x = 0.32;
   neckPivot.add(headGroup);
 
-  const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), coatMat);
+  const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 10), coatMat);
   cranium.scale.set(0.85, 0.9, 1.1);
   headGroup.add(cranium);
 
-  const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.28, 0.72, 12), coatMat);
+  const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.28, 0.72, 10), coatMat);
   muzzle.rotation.x = Math.PI / 2;
   muzzle.position.set(0, -0.08, -0.42);
   headGroup.add(muzzle);
 
   [-0.17, 0.17].forEach(ex => {
-    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.28, 8), coatMat);
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.28, 6), coatMat);
     ear.position.set(ex, 0.34, 0.05);
     ear.rotation.z = ex > 0 ? -0.15 : 0.15;
     headGroup.add(ear);
   });
 
   if (isRoyalSteed) {
-    const noseband = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.025, 6, 14), mats.goldRoyal);
+    const noseband = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.025, 6, 12), mats.goldRoyal);
     noseband.position.set(0, -0.06, -0.45);
     headGroup.add(noseband);
   }
@@ -830,10 +873,9 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   bodyGroup.add(tailPivot);
 
   for (let t = 0; t < 5; t++) {
-    const strand = new THREE.Mesh(new THREE.CylinderGeometry(0.06 + t * 0.02, 0.16, 1.65, 10), coatMat);
+    const strand = new THREE.Mesh(new THREE.CylinderGeometry(0.06 + t * 0.02, 0.16, 1.65, 8), coatMat);
     strand.position.set((t - 2) * 0.06, -0.68, 0.28 + t * 0.04);
     strand.rotation.x = 0.38 + t * 0.05;
-    strand.castShadow = true;
     tailPivot.add(strand);
   }
 
@@ -848,12 +890,11 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
     hipJoint.position.set(lx, ly, lz);
     bodyGroup.add(hipJoint);
 
-    const upperLimb = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.14, 0.95, 10), coatMat);
+    const upperLimb = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.14, 0.95, 8), coatMat);
     upperLimb.position.y = -0.42;
-    upperLimb.castShadow = true;
     hipJoint.add(upperLimb);
 
-    const kneeSphere = new THREE.Mesh(new THREE.SphereGeometry(0.145, 10, 10), coatMat);
+    const kneeSphere = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), coatMat);
     kneeSphere.position.y = -0.9;
     hipJoint.add(kneeSphere);
 
@@ -861,36 +902,37 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
     lowerJoint.position.y = -0.9;
     hipJoint.add(lowerJoint);
 
-    const cannonBone = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.095, 0.88, 10), coatMat);
+    const cannonBone = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.095, 0.88, 8), coatMat);
     cannonBone.position.y = -0.42;
-    cannonBone.castShadow = true;
     lowerJoint.add(cannonBone);
 
-    const hoof = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.145, 0.18, 10), mats.hoofDark);
-    hoof.position.set(0, -0.88, -0.03);
-    lowerJoint.add(hoof);
+    const fetlockJoint = new THREE.Group();
+    fetlockJoint.position.y = -0.84;
+    lowerJoint.add(fetlockJoint);
 
-    legs.push({ hipJoint, lowerJoint, isFront: idx < 2 });
+    const hoof = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.145, 0.18, 8), mats.hoofDark);
+    hoof.position.set(0, -0.06, -0.03);
+    fetlockJoint.add(hoof);
+
+    legs.push({ hipJoint, lowerJoint, fetlockJoint, isFront: idx < 2 });
   });
 
   return { root, bodyGroup, neckPivot, tailPivot, legs };
 }
 
 // ============================================================================
-// 5. TAILORED CONICAL KABBA CLOAK (NO RECTANGLE, NEVER COVERS FACE!)
+// 5. TAILORED CONICAL KABBA CLOAK (NO RECTANGLE, ZERO FACE CLIPPING!)
 // ============================================================================
 function createTailoredConicalKabba() {
-  // Open-ended conical cape: narrow collar at shoulders (r=0.39), wide flowing hem (r=0.98)
-  // Height = 1.62, shifted DOWN so top edge is strictly at y=0 (shoulder line) and bottom is at y=-1.62!
-  const capeGeo = new THREE.CylinderGeometry(0.39, 0.98, 1.62, 28, 18, true, -Math.PI * 0.72, Math.PI * 1.44);
-  capeGeo.translate(0, -0.81, 0); // Top rim is now at y = 0.0! It can NEVER rise above the shoulders!
-  capeGeo.rotateY(Math.PI);       // Open front, full royal drape across back and shoulders
+  // Open conical cloak: top collar r=0.38 at shoulder line (y=0), flaring to r=0.96 at bottom hem (y=-1.58)
+  const capeGeo = new THREE.CylinderGeometry(0.38, 0.96, 1.58, 24, 14, true, -Math.PI * 0.72, Math.PI * 1.44);
+  capeGeo.translate(0, -0.79, 0); // Puts top edge strictly at y = 0.0! Never rises above shoulders!
+  capeGeo.rotateY(Math.PI);
 
   const origPos = capeGeo.attributes.position.clone();
   const capeMesh = new THREE.Mesh(capeGeo, mats.kabbaCloak);
-  capeMesh.position.set(0, 1.12, 0.02); // Pinned strictly at shoulder height (Head is at y=1.38!)
+  capeMesh.position.set(0, 1.10, 0.02); // Pinned at shoulders (Head is high above at y = 1.42!)
   capeMesh.castShadow = true;
-  capeMesh.receiveShadow = true;
 
   return { capeMesh, capeGeo, origPos };
 }
@@ -898,11 +940,11 @@ function createTailoredConicalKabba() {
 function createAuthenticShotelSword() {
   const swordGroup = new THREE.Group();
 
-  const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 10), mats.goldRoyal);
+  const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 8), mats.goldRoyal);
   pommel.position.y = -0.24;
   swordGroup.add(pommel);
 
-  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.36, 10), mats.gashaShield);
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.36, 8), mats.gashaShield);
   grip.position.y = -0.04;
   swordGroup.add(grip);
 
@@ -910,14 +952,14 @@ function createAuthenticShotelSword() {
   crossguard.position.y = 0.15;
   swordGroup.add(crossguard);
 
-  const bladeSegments = 12;
+  const bladeSegments = 11;
   for (let i = 0; i < bladeSegments; i++) {
     const t = i / bladeSegments;
-    const segLen = 0.2;
+    const segLen = 0.21;
     const width = (1 - t * 0.68) * 0.135;
     const seg = new THREE.Mesh(new THREE.BoxGeometry(0.026, segLen, width), mats.forgedSteel);
 
-    const yPos = 0.25 + i * 0.175;
+    const yPos = 0.25 + i * 0.18;
     const zCurve = -Math.pow(t, 1.75) * 0.72;
     seg.position.set(0, yPos, zCurve);
     seg.rotation.x = -t * 0.64;
@@ -935,7 +977,6 @@ function createAuthenticShotelSword() {
   return { swordGroup, tipNode, baseNode };
 }
 
-// Assemble Player Root, Steed & Emperor Menelik II
 const playerRoot = new THREE.Group();
 scene.add(playerRoot);
 
@@ -952,11 +993,11 @@ const riderLegs = [];
   legPivot.position.set(lx, 0.05, 0);
   legPivot.rotation.z = lx > 0 ? -0.25 : 0.25;
 
-  const trouser = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.75, 10), mats.whiteKemis);
+  const trouser = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.75, 8), mats.whiteKemis);
   trouser.position.y = -0.35;
   legPivot.add(trouser);
 
-  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.095, 0.55, 10), mats.hoofDark);
+  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.095, 0.55, 8), mats.hoofDark);
   boot.position.y = -0.82;
   legPivot.add(boot);
 
@@ -968,42 +1009,38 @@ const torsoPivot = new THREE.Group();
 torsoPivot.position.y = 0.1;
 riderGroup.add(torsoPivot);
 
-const torsoMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 1.12, 14), mats.kabbaCloak);
+const torsoMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 1.12, 12), mats.kabbaCloak);
 torsoMesh.position.y = 0.55;
-torsoMesh.castShadow = true;
 torsoPivot.add(torsoMesh);
 
-// Golden Shoulder Epaulettes / Collar Ring
-const collarGold = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.045, 8, 20), mats.goldRoyal);
+const collarGold = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.045, 8, 16), mats.goldRoyal);
 collarGold.rotation.x = Math.PI / 2;
 collarGold.position.set(0, 1.1, 0);
 torsoPivot.add(collarGold);
 
-// Attach Tailored Conical Kabba Cloak (Drapes down from shoulders over horse rump!)
 const tailoredKabba = createTailoredConicalKabba();
 torsoPivot.add(tailoredKabba.capeMesh);
 
-// Detailed Sculpted Head, Eyes, Nose, Beard & Imperial Crown (100% Unobstructed!)
+// Sculpted Emperor Menelik II Head, Face, Beard & Imperial Crown
 const headGroup = new THREE.Group();
-headGroup.position.set(0, 1.4, -0.04);
+headGroup.position.set(0, 1.42, -0.04);
 torsoPivot.add(headGroup);
 
-const neckColumn = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.28, 12), mats.skinTone);
+const neckColumn = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.28, 10), mats.skinTone);
 neckColumn.position.y = -0.18;
 headGroup.add(neckColumn);
 
-const headSphere = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 16), mats.skinTone);
+const headSphere = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 14), mats.skinTone);
 headSphere.scale.set(0.94, 1.04, 1.0);
 headGroup.add(headSphere);
 
-// Nose Bridge & Eyes (Visible in 3/4 Hero Camera!)
-const noseMesh = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.15, 8), mats.skinTone);
+const noseMesh = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.15, 6), mats.skinTone);
 noseMesh.rotation.x = -Math.PI / 2;
 noseMesh.position.set(0, 0.0, -0.27);
 headGroup.add(noseMesh);
 
 [-0.09, 0.09].forEach(ex => {
-  const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), mats.whiteKemis);
+  const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.032, 6, 6), mats.whiteKemis);
   eyeWhite.position.set(ex, 0.05, -0.235);
   headGroup.add(eyeWhite);
   const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), mats.hoofDark);
@@ -1011,22 +1048,20 @@ headGroup.add(noseMesh);
   headGroup.add(pupil);
 });
 
-// Sculpted Royal Beard & Mustache
-const beard = new THREE.Mesh(new THREE.SphereGeometry(0.255, 14, 12), mats.hoofDark);
+const beard = new THREE.Mesh(new THREE.SphereGeometry(0.255, 12, 10), mats.hoofDark);
 beard.scale.set(0.94, 0.82, 0.96);
 beard.position.set(0, -0.1, -0.04);
 headGroup.add(beard);
 
-// White Ras Headband Scarf + Ornate Golden Imperial Crown
-const rasScarf = new THREE.Mesh(new THREE.CylinderGeometry(0.275, 0.27, 0.12, 18), mats.whiteKemis);
+const rasScarf = new THREE.Mesh(new THREE.CylinderGeometry(0.275, 0.27, 0.12, 14), mats.whiteKemis);
 rasScarf.position.y = 0.1;
 headGroup.add(rasScarf);
 
-const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.295, 0.265, 0.26, 18), mats.goldRoyal);
+const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.295, 0.265, 0.26, 14), mats.goldRoyal);
 crownBase.position.y = 0.25;
 headGroup.add(crownBase);
 
-const crownDome = new THREE.Mesh(new THREE.SphereGeometry(0.27, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), mats.goldRoyal);
+const crownDome = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), mats.goldRoyal);
 crownDome.position.y = 0.36;
 headGroup.add(crownDome);
 
@@ -1035,10 +1070,10 @@ const leftArm = new THREE.Group();
 leftArm.position.set(-0.46, 0.98, 0);
 torsoPivot.add(leftArm);
 
-const gashaShield = new THREE.Mesh(new THREE.ConeGeometry(0.52, 0.22, 18), mats.gashaShield);
+const gashaShield = new THREE.Mesh(new THREE.ConeGeometry(0.52, 0.22, 14), mats.gashaShield);
 gashaShield.rotation.z = Math.PI / 2.3;
 gashaShield.position.set(-0.22, -0.15, -0.15);
-const shieldBoss = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 10), mats.goldRoyal);
+const shieldBoss = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), mats.goldRoyal);
 shieldBoss.position.y = 0.11;
 gashaShield.add(shieldBoss);
 leftArm.add(gashaShield);
@@ -1048,7 +1083,7 @@ const rightShoulder = new THREE.Group();
 rightShoulder.position.set(0.48, 1.02, 0);
 torsoPivot.add(rightShoulder);
 
-const upperArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.55, 10), mats.kabbaCloak);
+const upperArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.55, 8), mats.kabbaCloak);
 upperArmMesh.position.y = -0.25;
 rightShoulder.add(upperArmMesh);
 
@@ -1056,7 +1091,7 @@ const rightElbow = new THREE.Group();
 rightElbow.position.y = -0.52;
 rightShoulder.add(rightElbow);
 
-const forearmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.085, 0.52, 10), mats.whiteKemis);
+const forearmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.085, 0.52, 8), mats.whiteKemis);
 forearmMesh.position.y = -0.24;
 rightElbow.add(forearmMesh);
 
@@ -1068,23 +1103,9 @@ const shotelObj = createAuthenticShotelSword();
 shotelObj.swordGroup.rotation.x = Math.PI / 2;
 rightWrist.add(shotelObj.swordGroup);
 
-// Optional GitHub GLTF Loader Hook
-if (ASSET_CONFIG.USE_GITHUB_GLB_MODELS && THREE.GLTFLoader) {
-  const loader = new THREE.GLTFLoader();
-  loader.load(ASSET_CONFIG.HORSE_GLB_URL, (gltf) => {
-    heroSteed.root.visible = false;
-    const model = gltf.scene;
-    model.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; } });
-    playerRoot.add(model);
-    if (gltf.animations && gltf.animations.length > 0) {
-      const mixer = new THREE.AnimationMixer(model);
-      mixer.clipAction(gltf.animations[0]).play();
-      gltfMixers.push(mixer);
-    }
-  });
-}
+const combatJoints = { torsoPivot, rightShoulder, rightElbow, rightWrist, leftArm };
 
-// 3D Sword Slash Trail Ribbon
+// Dynamic 3D Sword Slash Trail Ribbon
 const TRAIL_MAX = 14;
 const trailPoints = [];
 const trailGeo = new THREE.BufferGeometry();
@@ -1093,7 +1114,7 @@ trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
 const trailMat = new THREE.MeshBasicMaterial({
   color: 0xfffae0,
   transparent: true,
-  opacity: 0.78,
+  opacity: 0.8,
   side: THREE.DoubleSide,
   blending: THREE.AdditiveBlending
 });
@@ -1108,7 +1129,7 @@ slashTrailMesh.frustumCulled = false;
 scene.add(slashTrailMesh);
 
 // ============================================================================
-// 6. OVERHEAD ETHEREAL SAINT GEORGE APPARITION & LIGHTNING (IMAGE 4 MATCH)
+// 6. OVERHEAD ETHEREAL SAINT GEORGE APPARITION & LIGHTNING
 // ============================================================================
 const stGeorgePhantom = new THREE.Group();
 stGeorgePhantom.position.set(-0.85, 5.1, -2.4);
@@ -1117,27 +1138,26 @@ stGeorgePhantom.visible = false;
 playerRoot.add(stGeorgePhantom);
 
 const phantomSteed = buildSculptedHorse(mats.etherealGeorge, false);
-phantomSteed.root.rotation.x = -0.35;
 stGeorgePhantom.add(phantomSteed.root);
 
 const phantomRider = new THREE.Group();
 phantomRider.position.set(0, 2.6, 0);
 stGeorgePhantom.add(phantomRider);
 
-const pTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.48, 1.25, 12), mats.etherealGeorge);
+const pTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.48, 1.25, 10), mats.etherealGeorge);
 pTorso.position.y = 0.6;
 phantomRider.add(pTorso);
 
-const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 12), mats.etherealGeorge);
+const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), mats.etherealGeorge);
 pHead.position.y = 1.45;
 phantomRider.add(pHead);
 
-const pCrest = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.09, 8, 16, Math.PI), mats.etherealGeorge);
+const pCrest = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.09, 8, 12, Math.PI), mats.etherealGeorge);
 pCrest.rotation.y = Math.PI / 2;
 pCrest.position.set(0, 1.62, 0);
 phantomRider.add(pCrest);
 
-const pHalo = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.68, 24), mats.lightningMat);
+const pHalo = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.68, 20), mats.lightningMat);
 pHalo.position.set(0, 1.5, 0.15);
 phantomRider.add(pHalo);
 
@@ -1147,12 +1167,12 @@ pSpearGroup.rotation.x = -0.68;
 pSpearGroup.rotation.z = -0.22;
 phantomRider.add(pSpearGroup);
 
-const spearBeam = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 9.5, 10), mats.lightningMat);
+const spearBeam = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 9.5, 8), mats.lightningMat);
 spearBeam.rotation.x = Math.PI / 2;
 spearBeam.position.z = -1.2;
 pSpearGroup.add(spearBeam);
 
-const spearHead = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.85, 10), mats.lightningMat);
+const spearHead = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.85, 8), mats.lightningMat);
 spearHead.rotation.x = -Math.PI / 2;
 spearHead.position.z = -6.2;
 pSpearGroup.add(spearHead);
@@ -1171,7 +1191,7 @@ for (let b = 0; b < 5; b++) {
 // 7. FOREGROUND COMPANION HORSE EARS (BOTTOM OF SCREEN)
 // ============================================================================
 const fgHorseHead = new THREE.Group();
-const fgCranium = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 12), mats.baySteed);
+const fgCranium = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 10), mats.baySteed);
 fgCranium.scale.set(0.88, 0.9, 1.25);
 fgHorseHead.add(fgCranium);
 
@@ -1182,17 +1202,12 @@ for (let i = -2; i <= 2; i++) {
   fgHorseHead.add(lock);
 }
 
-const fgBrowStrap = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.025, 6, 16, Math.PI), mats.hoofDark);
-fgBrowStrap.rotation.x = 1.2;
-fgBrowStrap.position.set(0, 0.12, -0.15);
-fgHorseHead.add(fgBrowStrap);
-
 [-0.26, 0.26].forEach(ex => {
   const earGroup = new THREE.Group();
   earGroup.position.set(ex, 0.34, 0.05);
   earGroup.rotation.z = ex > 0 ? -0.22 : 0.22;
   earGroup.rotation.x = 0.25;
-  const outerEar = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.42, 10), mats.baySteed);
+  const outerEar = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.42, 8), mats.baySteed);
   outerEar.scale.set(0.85, 1, 0.65);
   earGroup.add(outerEar);
   fgHorseHead.add(earGroup);
@@ -1204,14 +1219,14 @@ scene.add(fgHorseHead);
 // ============================================================================
 function createSoftSmokeTexture() {
   const c = document.createElement('canvas');
-  c.width = 128; c.height = 128;
+  c.width = 64; c.height = 64;
   const ctx = c.getContext('2d');
-  const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 60);
-  g.addColorStop(0, 'rgba(218, 192, 158, 0.55)');
-  g.addColorStop(0.5, 'rgba(185, 158, 125, 0.25)');
+  const g = ctx.createRadialGradient(32, 32, 2, 32, 32, 30);
+  g.addColorStop(0, 'rgba(218, 192, 158, 0.5)');
+  g.addColorStop(0.5, 'rgba(185, 158, 125, 0.22)');
   g.addColorStop(1, 'rgba(160, 135, 105, 0)');
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 128, 128);
+  ctx.fillRect(0, 0, 64, 64);
   return new THREE.CanvasTexture(c);
 }
 
@@ -1222,11 +1237,11 @@ const smokeMat = new THREE.SpriteMaterial({
   depthWrite: false
 });
 
-for (let i = 0; i < 32; i++) {
+for (let i = 0; i < 24; i++) {
   const sp = new THREE.Sprite(smokeMat);
-  const sc = 4 + Math.random() * 7;
+  const sc = 4 + Math.random() * 6;
   sp.scale.set(sc, sc, 1);
-  sp.position.set((Math.random() - 0.5) * 16, 1.2 + Math.random() * 2.5, -Math.random() * 140);
+  sp.position.set((Math.random() - 0.5) * 15, 1.2 + Math.random() * 2.2, -Math.random() * 130);
   scene.add(sp);
   dustClouds.push({ sprite: sp, vx: (Math.random() - 0.5) * 0.04 });
 }
@@ -1245,21 +1260,17 @@ function buildRealisticEnemy(isCavalry) {
     rider.position.set(0, 2.55, 0);
     eRoot.add(rider);
 
-    const tunic = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.42, 1.1, 10), mats.colonialKhaki);
+    const tunic = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.42, 1.1, 8), mats.colonialKhaki);
     tunic.position.y = 0.55;
-    tunic.castShadow = true;
     rider.add(tunic);
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), mats.pithHelmet);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), mats.pithHelmet);
     head.position.y = 1.28;
     rider.add(head);
 
-    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.45, 0.06, 12), mats.pithHelmet);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.45, 0.06, 10), mats.pithHelmet);
     brim.position.y = 1.38;
     rider.add(brim);
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), mats.pithHelmet);
-    dome.position.y = 1.38;
-    rider.add(dome);
 
     const saberArm = new THREE.Group();
     saberArm.position.set(-0.45, 0.95, 0);
@@ -1278,27 +1289,17 @@ function buildRealisticEnemy(isCavalry) {
       vx: 0, vy: 0, vz: 0, rx: 0, rz: 0
     };
   } else {
-    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.15, 10), mats.colonialKhaki);
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.15, 8), mats.colonialKhaki);
     torso.position.y = 1.45;
-    torso.castShadow = true;
     eRoot.add(torso);
 
-    const strap = new THREE.Mesh(new THREE.BoxGeometry(0.76, 1.1, 0.45), mats.rifleWood);
-    strap.scale.set(1.02, 0.15, 1.02);
-    strap.rotation.z = 0.65;
-    strap.position.y = 1.5;
-    eRoot.add(strap);
-
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), mats.pithHelmet);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), mats.pithHelmet);
     head.position.y = 2.22;
     eRoot.add(head);
 
-    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.45, 0.06, 12), mats.pithHelmet);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.45, 0.06, 10), mats.pithHelmet);
     brim.position.y = 2.32;
     eRoot.add(brim);
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), mats.pithHelmet);
-    dome.position.y = 2.32;
-    eRoot.add(dome);
 
     const legs = [];
     [-0.2, 0.2].forEach(lx => {
@@ -1315,7 +1316,7 @@ function buildRealisticEnemy(isCavalry) {
     rifleGroup.position.set(0.32, 1.68, -0.35);
     const stock = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.16, 1.35), mats.rifleWood);
     rifleGroup.add(stock);
-    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 1.45, 8), mats.gunMetal);
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 1.45, 6), mats.gunMetal);
     barrel.rotation.x = Math.PI / 2;
     barrel.position.set(0, 0.06, -0.55);
     rifleGroup.add(barrel);
@@ -1357,7 +1358,7 @@ const state = {
   vy: 0,
   isJumping: false,
   slashProgress: 0,
-  comboSide: 1,
+  comboIndex: 0,
   invincible: 0,
   paused: false,
   gameOver: false,
@@ -1377,13 +1378,11 @@ function showBanner(title, sub) {
   setTimeout(() => b.classList.remove('show'), 2100);
 }
 
-// Cycle User Camera Preference
 function switchCameraPreference() {
   currentCamIndex = (currentCamIndex + 1) % CAMERA_PRESETS.length;
   const preset = CAMERA_PRESETS[currentCamIndex];
   document.getElementById('cam-label').textContent = preset.name;
   fgHorseHead.visible = preset.showFgEars;
-  // Hide rider head in 1st-person saddle view so it never blocks camera
   riderGroup.visible = preset.name !== '1ST PERSON';
   showBanner(`CAMERA: ${preset.name}`, preset.desc);
 }
@@ -1426,9 +1425,9 @@ function triggerStanceToggle() {
 
 function triggerStrike() {
   if (state.paused || state.gameOver) return;
-  if (state.slashProgress === 0 || state.slashProgress > 0.65) {
+  if (state.slashProgress === 0 || state.slashProgress > 0.62) {
     state.slashProgress = 0.01;
-    state.comboSide *= -1;
+    state.comboIndex = (state.comboIndex + 1) % 3;
 
     if (state.mode === 'ST_GEORGE') {
       const boltGroup = new THREE.Group();
@@ -1449,9 +1448,9 @@ function activateSaintGeorge() {
   state.invincible = 65;
   state.shake = 0.85;
   stGeorgePhantom.visible = true;
-  stGeorgeLight.intensity = 4.2;
+  stGeorgeLight.intensity = 4.0;
   syncModeHUD();
-  spawnSparks(playerRoot.position.x, 4.0, playerRoot.position.z, 0xffea70, 45);
+  spawnSparks(playerRoot.position.x, 4.0, playerRoot.position.z, 0xffea70, 35);
   showBanner("SAINT GEORGE AWAKENED", "Qidus Giorgis Descends in Lightning Over Adwa!");
 }
 
@@ -1464,7 +1463,7 @@ function syncModeHUD() {
   document.getElementById('txt-stance').textContent = isFoot ? 'DROP' : 'GROUND';
 }
 
-function spawnSparks(x, y, z, colorHex, count = 20) {
+function spawnSparks(x, y, z, colorHex, count = 18) {
   const geo = new THREE.OctahedronGeometry(0.14, 0);
   const mat = new THREE.MeshBasicMaterial({ color: colorHex });
   for (let i = 0; i < count; i++) {
@@ -1476,7 +1475,7 @@ function spawnSparks(x, y, z, colorHex, count = 20) {
       vx: (Math.random() - 0.5) * 0.55,
       vy: Math.random() * 0.42 + 0.12,
       vz: (Math.random() - 0.5) * 0.55,
-      life: 26
+      life: 24
     });
   }
 }
@@ -1532,100 +1531,15 @@ window.addEventListener('resize', () => {
 });
 
 // ============================================================================
-// 12. REALISTIC KINEMATICS, TAILORED CLOAK CLOTH PHYSICS & RENDER LOOP
+// 12. MAIN RENDER LOOP POWERED BY ADWA_ANIMATIONS
 // ============================================================================
 let frame = 0;
-const clock = new THREE.Clock();
 const tmpTip = new THREE.Vector3();
 const tmpBase = new THREE.Vector3();
-
-function animateHorseGallop(horseObj, cyclePhase) {
-  horseObj.bodyGroup.position.y = 2.05 + Math.sin(cyclePhase) * 0.14;
-  horseObj.bodyGroup.rotation.x = Math.cos(cyclePhase) * 0.065;
-  horseObj.neckPivot.rotation.x = Math.sin(cyclePhase - 0.5) * 0.11;
-  horseObj.tailPivot.rotation.x = 0.18 + Math.cos(cyclePhase * 1.4) * 0.16;
-
-  const legOffsets = [0, 0.65, 2.9, 3.55];
-  horseObj.legs.forEach((leg, idx) => {
-    const p = cyclePhase + legOffsets[idx];
-    const hipSwing = Math.sin(p) * 0.68;
-    leg.hipJoint.rotation.x = hipSwing;
-    const kneeBend = Math.max(0, Math.cos(p)) * (leg.isFront ? -0.85 : 0.85);
-    leg.lowerJoint.rotation.x = kneeBend;
-  });
-}
-
-function updateRealisticSwordKinematics() {
-  if (state.slashProgress > 0) {
-    state.slashProgress += 0.068;
-    const p = state.slashProgress;
-    const dir = state.comboSide;
-
-    if (p < 0.25) {
-      const w = p / 0.25;
-      torsoPivot.rotation.y = dir * 0.42 * w;
-      rightShoulder.rotation.set(-0.85 * w, dir * 0.65 * w, -dir * 0.5 * w);
-      rightElbow.rotation.x = -1.1 * w;
-      rightWrist.rotation.z = dir * 0.4 * w;
-    } else if (p < 0.68) {
-      const s = (p - 0.25) / 0.43;
-      const ease = 1 - Math.pow(1 - s, 3);
-      torsoPivot.rotation.y = dir * (0.42 - 1.05 * ease);
-      torsoPivot.rotation.x = 0.16 * Math.sin(ease * Math.PI);
-      rightShoulder.rotation.set(
-        -0.85 + 1.55 * ease,
-        dir * (0.65 - 1.85 * ease),
-        -dir * 0.35
-      );
-      rightElbow.rotation.x = -1.1 + 0.95 * ease;
-      rightWrist.rotation.x = 0.65 * ease;
-    } else if (p < 1.0) {
-      const r = (p - 0.68) / 0.32;
-      torsoPivot.rotation.y *= (1 - r);
-      torsoPivot.rotation.x *= (1 - r);
-      rightShoulder.rotation.x = 0.7 * (1 - r) - 0.2 * r;
-      rightShoulder.rotation.y = -dir * 1.2 * (1 - r) + 0.2 * r;
-      rightShoulder.rotation.z = -dir * 0.35 * (1 - r) - 0.25 * r;
-      rightElbow.rotation.x = -0.15 * (1 - r) - 0.55 * r;
-      rightWrist.rotation.x = 0.65 * (1 - r);
-    } else {
-      state.slashProgress = 0;
-    }
-
-    shotelObj.tipNode.getWorldPosition(tmpTip);
-    shotelObj.baseNode.getWorldPosition(tmpBase);
-    trailPoints.unshift({ tip: tmpTip.clone(), base: tmpBase.clone() });
-    if (trailPoints.length > TRAIL_MAX) trailPoints.pop();
-    slashTrailMesh.visible = true;
-  } else {
-    const sway = Math.sin(state.cycle) * 0.06;
-    torsoPivot.rotation.set(0.05 + sway * 0.5, 0, 0);
-    rightShoulder.rotation.set(-0.22 + sway, 0.22, -0.28);
-    rightElbow.rotation.set(-0.58, 0, 0);
-    rightWrist.rotation.set(0, 0, 0);
-
-    if (trailPoints.length > 0) trailPoints.pop();
-    slashTrailMesh.visible = trailPoints.length > 2;
-  }
-
-  if (trailPoints.length > 1) {
-    const posArr = trailGeo.attributes.position.array;
-    for (let i = 0; i < TRAIL_MAX; i++) {
-      const pt = trailPoints[Math.min(i, trailPoints.length - 1)];
-      const idx = i * 6;
-      posArr[idx]     = pt.tip.x;  posArr[idx + 1] = pt.tip.y;  posArr[idx + 2] = pt.tip.z;
-      posArr[idx + 3] = pt.base.x; posArr[idx + 4] = pt.base.y; posArr[idx + 5] = pt.base.z;
-    }
-    trailGeo.attributes.position.needsUpdate = true;
-  }
-}
 
 function animate() {
   requestAnimationFrame(animate);
   if (state.paused || state.gameOver) return;
-
-  const dt = clock.getDelta();
-  gltfMixers.forEach(m => m.update(dt));
 
   frame++;
   state.speed = Math.min(1.22, 0.68 + state.score * 0.00007);
@@ -1640,17 +1554,295 @@ function animate() {
     }
   });
 
-  // Animate Allied Ethiopian Warriors Sprinting Along Left Ridge
   alliedWarriors.forEach(ally => {
     const p = state.cycle * 1.3 + ally.userData.phase;
     ally.userData.legs[0].rotation.x = Math.sin(p) * 0.75;
     ally.userData.legs[1].rotation.x = -Math.sin(p) * 0.75;
-    ally.position.y = 1.7 + Math.abs(Math.cos(p)) * 0.15;
+    ally.position.y = 1.65 + Math.abs(Math.cos(p)) * 0.15;
   });
 
   dustClouds.forEach(d => {
     d.sprite.position.z += state.speed * 0.85;
     d.sprite.position.x += d.vx;
     if (d.sprite.position.z > 15) {
-      d.sprite.position.z = -135;
-      d.sprite.position.x = (Math.random() - 0.5) * 
+      d.sprite.position.z = -125;
+      d.sprite.position.x = (Math.random() - 0.5) * 15;
+    }
+  });
+
+  const targetX = LANES[currentLane];
+  const dxLane = targetX - playerRoot.position.x;
+  playerRoot.position.x += dxLane * 0.15;
+  playerRoot.rotation.z = -dxLane * 0.06;
+
+  playerRoot.position.y += state.vy;
+  if (playerRoot.position.y > 0) {
+    state.vy -= 0.02;
+  } else {
+    playerRoot.position.y = 0;
+    state.vy = 0;
+    state.isJumping = false;
+  }
+
+  // Run Tailored Kabba Cloth Simulation from animations.js
+  window.ADWA_ANIMATIONS.updateKabbaCloth(tailoredKabba.capeGeo, tailoredKabba.origPos, state.cycle);
+
+  if (state.mode === 'ON_FOOT') {
+    heroSteed.root.position.x += (-2.2 - heroSteed.root.position.x) * 0.12;
+    riderGroup.position.x += (0.55 - riderGroup.position.x) * 0.12;
+    riderGroup.position.y += (0.85 + Math.abs(Math.sin(state.cycle * 1.4)) * 0.18 - riderGroup.position.y) * 0.22;
+    riderLegs[0].rotation.x = Math.sin(state.cycle * 1.5) * 0.85;
+    riderLegs[1].rotation.x = -Math.sin(state.cycle * 1.5) * 0.85;
+  } else {
+    heroSteed.root.position.x += (0 - heroSteed.root.position.x) * 0.15;
+    riderGroup.position.x += (0 - riderGroup.position.x) * 0.15;
+    riderGroup.position.y += (2.55 + Math.sin(state.cycle) * 0.14 - riderGroup.position.y) * 0.25;
+    riderLegs[0].rotation.x = 0.28;
+    riderLegs[1].rotation.x = 0.28;
+  }
+
+  // Run 4-Beat Equine Gallop & 3-Combo Sword Kinematics from animations.js
+  window.ADWA_ANIMATIONS.applyHorseGallop(heroSteed, state.cycle, false);
+
+  if (state.slashProgress > 0) {
+    state.slashProgress += 0.068;
+    if (state.slashProgress >= 1.0) state.slashProgress = 0;
+    window.ADWA_ANIMATIONS.applySwordCombatIK(combatJoints, state.slashProgress, state.comboIndex, state.cycle);
+
+    shotelObj.tipNode.getWorldPosition(tmpTip);
+    shotelObj.baseNode.getWorldPosition(tmpBase);
+    trailPoints.unshift({ tip: tmpTip.clone(), base: tmpBase.clone() });
+    if (trailPoints.length > TRAIL_MAX) trailPoints.pop();
+    slashTrailMesh.visible = true;
+  } else {
+    window.ADWA_ANIMATIONS.applySwordCombatIK(combatJoints, 0, state.comboIndex, state.cycle);
+    if (trailPoints.length > 0) trailPoints.pop();
+    slashTrailMesh.visible = trailPoints.length > 2;
+  }
+
+  if (trailPoints.length > 1) {
+    const posArr = trailGeo.attributes.position.array;
+    for (let i = 0; i < TRAIL_MAX; i++) {
+      const pt = trailPoints[Math.min(i, trailPoints.length - 1)];
+      const idx = i * 6;
+      posArr[idx]     = pt.tip.x;  posArr[idx + 1] = pt.tip.y;  posArr[idx + 2] = pt.tip.z;
+      posArr[idx + 3] = pt.base.x; posArr[idx + 4] = pt.base.y; posArr[idx + 5] = pt.base.z;
+    }
+    trailGeo.attributes.position.needsUpdate = true;
+  }
+
+  if (state.mode === 'ST_GEORGE') {
+    state.stGeorgeTimer--;
+    window.ADWA_ANIMATIONS.applyHorseGallop(phantomSteed, state.cycle * 1.15, true);
+    stGeorgeLight.position.set(playerRoot.position.x, playerRoot.position.y + 6, playerRoot.position.z - 2);
+
+    if (frame % 3 === 0) {
+      lightningBolts.forEach((line, bIdx) => {
+        const lPos = line.geometry.attributes.position;
+        const angle = (bIdx / lightningBolts.length) * Math.PI * 2 + frame * 0.1;
+        for (let s = 0; s < 8; s++) {
+          const jitter = s === 0 ? 0 : (Math.random() - 0.5) * 1.1;
+          lPos.setXYZ(
+            s,
+            Math.cos(angle) * (0.8 + s * 0.35) + jitter,
+            3.5 - s * 0.75,
+            Math.sin(angle) * (0.8 + s * 0.35) + jitter
+          );
+        }
+        lPos.needsUpdate = true;
+      });
+    }
+
+    document.getElementById('stgeorge-fill').style.width = `${(state.stGeorgeTimer / state.maxStGeorgeTime) * 100}%`;
+    if (state.stGeorgeTimer <= 0) {
+      state.mode = 'MOUNTED';
+      state.strikeCharge = 0;
+      stGeorgePhantom.visible = false;
+      stGeorgeLight.intensity = 0;
+      document.getElementById('stgeorge-fill').style.width = '0%';
+      syncModeHUD();
+    }
+  }
+
+  if (state.invincible > 0) state.invincible--;
+
+  if (frame % Math.max(36, Math.floor(78 - state.speed * 28)) === 0) {
+    const laneIdx = Math.floor(Math.random() * 3);
+    const eMesh = buildRealisticEnemy(Math.random() > 0.45);
+    eMesh.position.set(LANES[laneIdx], 0, -135);
+    scene.add(eMesh);
+    enemies.push(eMesh);
+  }
+
+  for (let i = spearBolts.length - 1; i >= 0; i--) {
+    const b = spearBolts[i];
+    b.mesh.position.z -= 2.8;
+    b.mesh.position.y = Math.max(1.2, b.mesh.position.y - 0.12);
+    b.life--;
+    if (b.life <= 0) {
+      scene.remove(b.mesh);
+      spearBolts.splice(i, 1);
+    }
+  }
+
+  const isStrikingNow = state.slashProgress >= 0.2 && state.slashProgress <= 0.78;
+  const strikeReachZ = state.mode === 'ST_GEORGE' ? 9.5 : 6.8;
+
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+
+    if (e.userData.ragdoll) {
+      e.position.x += e.userData.vx;
+      e.position.y += e.userData.vy;
+      e.position.z += e.userData.vz;
+      e.userData.vy -= 0.028;
+      e.rotation.x += e.userData.rx;
+      e.rotation.z += e.userData.rz;
+      if (e.position.y < -5 || e.position.z > 20) {
+        scene.remove(e);
+        enemies.splice(i, 1);
+      }
+      continue;
+    }
+
+    e.position.z += state.speed * e.userData.speedMult;
+
+    if (e.userData.isCavalry) {
+      window.ADWA_ANIMATIONS.applyHorseGallop(e.userData.horse, state.cycle * 1.15 + i, false);
+      e.userData.saberArm.rotation.x = -0.7 + Math.sin(state.cycle * 1.5) * 0.25;
+    } else {
+      e.userData.infantryLegs[0].rotation.x = Math.sin(state.cycle * 1.4 + i) * 0.65;
+      e.userData.infantryLegs[1].rotation.x = -Math.sin(state.cycle * 1.4 + i) * 0.65;
+    }
+
+    const dx = Math.abs(e.position.x - playerRoot.position.x);
+    const dz = Math.abs(e.position.z - playerRoot.position.z);
+
+    let boltHit = false;
+    for (let j = spearBolts.length - 1; j >= 0; j--) {
+      if (Math.abs(spearBolts[j].mesh.position.x - e.position.x) < 2.8 &&
+          Math.abs(spearBolts[j].mesh.position.z - e.position.z) < 4.0) {
+        boltHit = true;
+        break;
+      }
+    }
+
+    const meleeHit = isStrikingNow && dx < 2.6 && e.position.z < 1.8 && e.position.z > -strikeReachZ;
+    const georgeAuraHit = state.mode === 'ST_GEORGE' && dx < 2.3 && dz < 3.6;
+
+    if (boltHit || meleeHit || georgeAuraHit) {
+      e.userData.ragdoll = true;
+      e.userData.vx = (e.position.x >= playerRoot.position.x ? 1 : -1) * (0.28 + Math.random() * 0.25);
+      e.userData.vy = 0.38 + Math.random() * 0.2;
+      e.userData.vz = -0.35;
+      e.userData.rx = (Math.random() - 0.5) * 0.28;
+      e.userData.rz = (Math.random() - 0.5) * 0.28;
+
+      spawnSparks(e.position.x, 2.4, e.position.z, state.mode === 'ST_GEORGE' ? 0xffe066 : 0xff4d1a, 20);
+      state.kills++;
+      state.score += 300;
+      state.shake = 0.42;
+      document.getElementById('kill-counter').textContent = `Vanquished: ${state.kills}`;
+
+      if (state.mode !== 'ST_GEORGE') {
+        state.strikeCharge++;
+        document.getElementById('stgeorge-fill').style.width = `${(state.strikeCharge / 5) * 100}%`;
+        if (state.strikeCharge >= 5) {
+          activateSaintGeorge();
+        }
+      }
+      continue;
+    }
+
+    if (dx < 1.65 && dz < 2.1 && playerRoot.position.y < 1.8 && state.invincible <= 0) {
+      state.hp -= 22;
+      state.invincible = 42;
+      state.shake = 0.72;
+      spawnSparks(playerRoot.position.x, 2.5, playerRoot.position.z, 0xd90429, 16);
+      document.getElementById('hp-fill').style.width = `${Math.max(0, state.hp)}%`;
+
+      if (state.hp <= 0) {
+        triggerGameOver();
+        return;
+      }
+    }
+
+    if (e.position.z > 18) {
+      scene.remove(e);
+      enemies.splice(i, 1);
+    }
+  }
+
+  for (let i = sparkParticles.length - 1; i >= 0; i--) {
+    const p = sparkParticles[i];
+    p.mesh.position.x += p.vx;
+    p.mesh.position.y += p.vy;
+    p.mesh.position.z += p.vz;
+    p.vy -= 0.018;
+    p.life--;
+    if (p.life <= 0) {
+      scene.remove(p.mesh);
+      sparkParticles.splice(i, 1);
+    }
+  }
+
+  if (state.shake > 0.01) state.shake *= 0.84;
+  else state.shake = 0;
+
+  const preset = CAMERA_PRESETS[currentCamIndex];
+  const camTargetX = playerRoot.position.x * 0.72 + preset.offsetX + (Math.random() - 0.5) * state.shake;
+  const camTargetY = preset.offsetY + playerRoot.position.y * 0.38 + (Math.random() - 0.5) * state.shake;
+  const camTargetZ = preset.offsetZ;
+
+  camera.position.x += (camTargetX - camera.position.x) * 0.14;
+  camera.position.y += (camTargetY - camera.position.y) * 0.14;
+  camera.position.z += (camTargetZ - camera.position.z) * 0.14;
+  camera.lookAt(
+    playerRoot.position.x * 0.5 + preset.lookOffsetX,
+    preset.lookY + playerRoot.position.y * 0.25,
+    preset.lookZ
+  );
+
+  fgHorseHead.position.set(
+    camera.position.x - 0.15,
+    camera.position.y - 2.02 + Math.sin(state.cycle * 1.15) * 0.08,
+    camera.position.z - 2.55
+  );
+
+  renderer.render(scene, camera);
+}
+
+function triggerGameOver() {
+  state.gameOver = true;
+  document.getElementById('final-summary').textContent =
+    `Adwa Glory Score: ${state.score.toLocaleString()} | Enemy Forces Vanquished: ${state.kills}`;
+  document.getElementById('gameover-modal').style.display = 'flex';
+}
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+  enemies.forEach(e => scene.remove(e));
+  enemies.length = 0;
+  spearBolts.forEach(b => scene.remove(b.mesh));
+  spearBolts.length = 0;
+
+  state.hp = 100;
+  state.score = 0;
+  state.kills = 0;
+  state.strikeCharge = 0;
+  state.mode = 'MOUNTED';
+  state.gameOver = false;
+  currentLane = 1;
+  stGeorgePhantom.visible = false;
+  stGeorgeLight.intensity = 0;
+
+  document.getElementById('hp-fill').style.width = '100%';
+  document.getElementById('stgeorge-fill').style.width = '0%';
+  document.getElementById('kill-counter').textContent = 'Vanquished: 0';
+  document.getElementById('gameover-modal').style.display = 'none';
+  syncModeHUD();
+});
+
+animate();
+</script>
+</body>
+</html>
