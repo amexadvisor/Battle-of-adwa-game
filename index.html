@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>ADWA 1896: Realistic 3D Cavalry Engine</title>
+<title>ADWA 1896: Emperor Menelik II & Saint George 3D</title>
 <style>
   * {
     margin: 0;
@@ -18,7 +18,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #140d08;
+    background: #120b06;
     font-family: 'Georgia', serif;
   }
   #webgl-container {
@@ -31,17 +31,17 @@
     inset: 0;
     pointer-events: none;
     background:
-      radial-gradient(circle at 75% 15%, rgba(255, 225, 150, 0.22) 0%, transparent 45%),
-      radial-gradient(circle at center, transparent 50%, rgba(8, 4, 1, 0.82) 100%);
+      radial-gradient(circle at 78% 14%, rgba(255, 232, 165, 0.25) 0%, transparent 48%),
+      radial-gradient(circle at center, transparent 52%, rgba(8, 4, 1, 0.84) 100%);
     z-index: 2;
   }
 
-  /* Cinematic HUD matching reference 4 */
+  /* Top HUD */
   #hud-top {
     position: fixed;
-    top: max(12px, env(safe-area-inset-top));
-    left: max(14px, env(safe-area-inset-left));
-    right: max(14px, env(safe-area-inset-right));
+    top: max(10px, env(safe-area-inset-top));
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -49,17 +49,17 @@
     pointer-events: none;
   }
   .bars-box {
-    background: linear-gradient(135deg, rgba(20, 14, 9, 0.9), rgba(40, 28, 16, 0.78));
+    background: linear-gradient(135deg, rgba(18, 12, 8, 0.92), rgba(38, 26, 15, 0.8));
     border: 1.5px solid #c59b27;
     border-radius: 6px;
-    padding: 8px 12px;
+    padding: 7px 11px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.85);
-    min-width: 175px;
+    min-width: 165px;
   }
   .bar-label {
-    font-size: 10px;
+    font-size: 9.5px;
     color: #f3e5ab;
-    letter-spacing: 1.2px;
+    letter-spacing: 1.1px;
     text-transform: uppercase;
     margin-bottom: 3px;
     font-weight: bold;
@@ -67,11 +67,11 @@
   .bar-track {
     width: 100%;
     height: 8px;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     border: 1px solid rgba(212, 175, 55, 0.5);
     border-radius: 3px;
     overflow: hidden;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
   #hp-fill {
     width: 100%;
@@ -93,13 +93,13 @@
     text-shadow: 0 2px 10px #000;
   }
   #center-title h2 {
-    font-size: clamp(16px, 3.2vw, 24px);
+    font-size: clamp(15px, 3vw, 22px);
     letter-spacing: 3px;
     color: #ffd700;
     text-transform: uppercase;
   }
   #center-title span {
-    font-size: 11px;
+    font-size: 10.5px;
     color: #e5d8c5;
     letter-spacing: 1px;
   }
@@ -107,40 +107,48 @@
   .top-right-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     pointer-events: auto;
   }
   #score-display {
-    font-size: clamp(20px, 4vw, 30px);
+    font-size: clamp(18px, 3.8vw, 28px);
     font-weight: bold;
     color: #fff6db;
     text-shadow: 0 3px 12px #000, 0 0 15px rgba(212, 175, 55, 0.6);
+    margin-right: 4px;
   }
-  #pause-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    background: rgba(24, 16, 10, 0.9);
+  .hud-icon-btn {
+    height: 38px;
+    padding: 0 10px;
+    border-radius: 7px;
+    background: rgba(22, 14, 9, 0.92);
     border: 1.5px solid #c59b27;
     color: #ffd700;
-    font-size: 15px;
+    font-family: inherit;
+    font-size: 11px;
     font-weight: bold;
+    letter-spacing: 0.8px;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.8);
+    gap: 4px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.85);
+  }
+  .hud-icon-btn:active {
+    transform: scale(0.93);
+    border-color: #fff;
   }
 
-  /* Shield-shaped State Crest matching reference 4 */
+  /* Shield State Badge */
   #state-crest {
     position: fixed;
-    bottom: max(106px, calc(env(safe-area-inset-bottom) + 96px));
-    right: max(16px, env(safe-area-inset-right));
-    background: linear-gradient(180deg, rgba(28, 22, 16, 0.94), rgba(12, 9, 6, 0.98));
+    bottom: max(104px, calc(env(safe-area-inset-bottom) + 94px));
+    right: max(14px, env(safe-area-inset-right));
+    background: linear-gradient(180deg, rgba(28, 20, 14, 0.94), rgba(12, 8, 5, 0.98));
     border: 1.5px solid #d4af37;
-    padding: 7px 14px;
-    border-radius: 6px 6px 18px 18px;
+    padding: 6px 13px;
+    border-radius: 6px 6px 16px 16px;
     color: #ffd700;
     text-align: center;
     z-index: 10;
@@ -149,22 +157,22 @@
   }
   #state-crest small {
     display: block;
-    font-size: 9px;
+    font-size: 8.5px;
     color: #cbb682;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.4px;
     text-transform: uppercase;
   }
   #state-crest strong {
-    font-size: 13px;
+    font-size: 12.5px;
     letter-spacing: 0.8px;
   }
 
   /* Touch Controls */
   #touch-controls {
     position: fixed;
-    bottom: max(16px, env(safe-area-inset-bottom));
-    left: max(14px, env(safe-area-inset-left));
-    right: max(14px, env(safe-area-inset-right));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -173,20 +181,20 @@
   }
   .ctrl-cluster {
     display: flex;
-    gap: 10px;
+    gap: 9px;
     pointer-events: auto;
   }
   .game-btn {
-    width: clamp(58px, 14vw, 72px);
-    height: clamp(58px, 14vw, 72px);
+    width: clamp(56px, 13.5vw, 70px);
+    height: clamp(56px, 13.5vw, 70px);
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(58, 38, 20, 0.92), rgba(15, 9, 4, 0.96));
-    border: 2px solid rgba(212, 175, 55, 0.8);
+    border: 2px solid rgba(212, 175, 55, 0.82);
     color: #ffd700;
     font-family: inherit;
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: bold;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.7px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -200,46 +208,46 @@
     border-color: #fff;
   }
   .game-btn .ico {
-    font-size: 19px;
+    font-size: 18px;
     line-height: 1;
     margin-bottom: 2px;
   }
   .strike-btn {
-    width: clamp(68px, 16vw, 84px);
-    height: clamp(68px, 16vw, 84px);
-    background: radial-gradient(circle at 30% 30%, rgba(145, 25, 15, 0.95), rgba(45, 8, 5, 0.98));
+    width: clamp(66px, 15.5vw, 82px);
+    height: clamp(66px, 15.5vw, 82px);
+    background: radial-gradient(circle at 30% 30%, rgba(150, 26, 14, 0.95), rgba(45, 8, 5, 0.98));
     border-color: #ff7b5a;
     box-shadow: 0 0 22px rgba(220, 40, 20, 0.45), 0 6px 20px rgba(0,0,0,0.9);
   }
 
   #divine-banner {
     position: fixed;
-    top: 22%;
+    top: 21%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.85);
     text-align: center;
     pointer-events: none;
     z-index: 18;
     opacity: 0;
-    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    width: 90%;
+    transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    width: 92%;
   }
   #divine-banner.show {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
   #divine-banner h1 {
-    font-size: clamp(22px, 5vw, 42px);
+    font-size: clamp(20px, 4.8vw, 40px);
     color: #ffd700;
     text-shadow: 0 0 25px rgba(255, 215, 0, 0.95), 0 4px 14px #000;
     letter-spacing: 3px;
     text-transform: uppercase;
   }
   #divine-banner p {
-    font-size: clamp(11px, 2.2vw, 16px);
+    font-size: clamp(11px, 2.1vw, 15px);
     color: #fff8dc;
     text-shadow: 0 2px 8px #000;
-    letter-spacing: 2px;
+    letter-spacing: 1.8px;
     text-transform: uppercase;
   }
 
@@ -258,22 +266,22 @@
     padding: 20px;
   }
   .overlay-modal h1 {
-    font-size: clamp(28px, 6vw, 48px);
+    font-size: clamp(26px, 5.5vw, 44px);
     color: #ffd700;
-    letter-spacing: 4px;
+    letter-spacing: 3px;
     margin-bottom: 10px;
     text-shadow: 0 4px 20px rgba(212, 175, 55, 0.6);
   }
   .overlay-modal p {
-    font-size: 16px;
+    font-size: 15px;
     color: #e2cfb0;
-    margin-bottom: 24px;
+    margin-bottom: 22px;
     max-width: 440px;
     line-height: 1.5;
   }
   .gold-action-btn {
-    padding: 13px 32px;
-    font-size: 15px;
+    padding: 13px 30px;
+    font-size: 14px;
     font-family: inherit;
     font-weight: bold;
     letter-spacing: 2px;
@@ -286,7 +294,9 @@
     box-shadow: 0 6px 24px rgba(255, 215, 0, 0.45);
   }
 </style>
+<!-- Three.js + GLTFLoader for Optional GitHub 3D Models -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
 
@@ -308,7 +318,8 @@
 
   <div class="top-right-group">
     <div id="score-display">0</div>
-    <button id="pause-btn" title="Pause Game">❚❚</button>
+    <button class="hud-icon-btn" id="cam-btn" title="Switch Camera View">🎥 <span id="cam-label">HERO 3/4</span></button>
+    <button class="hud-icon-btn" id="pause-btn" title="Pause Game">❚❚</button>
   </div>
 </div>
 
@@ -336,7 +347,7 @@
 
 <div class="overlay-modal" id="pause-modal">
   <h1>BATTLE PAUSED</h1>
-  <p>Ride through the craggy pass of Adwa. Cleave enemy forces with your curved Shotel sword or unleash the lightning of Saint George.</p>
+  <p>Tap the 🎥 CAM button in the top-right corner anytime to switch between Cinematic 3/4 Angle, Close GTA View, Wide Canyon View, or First-Person Saddle POV.</p>
   <button class="gold-action-btn" id="resume-btn">RESUME CHARGE</button>
 </div>
 
@@ -348,115 +359,186 @@
 
 <script>
 // ============================================================================
-// 1. SCENE, DRAMATIC SKY & LIGHTING (MATCHING IMAGE 4 ATMOSPHERE)
+// 0. GITHUB .GLB 3D ASSET LOADER CONFIGURATION (OPTIONAL EXTERNAL ANIMATIONS)
+// ============================================================================
+// If you upload `assets/horse.glb` or `assets/menelik.glb` to your GitHub repo,
+// set USE_GITHUB_GLB_MODELS to true and the engine will load & animate them!
+const ASSET_CONFIG = {
+  USE_GITHUB_GLB_MODELS: false,
+  HORSE_GLB_URL: './assets/horse.glb',
+  MENELIK_GLB_URL: './assets/menelik.glb'
+};
+const gltfMixers = [];
+
+// ============================================================================
+// 1. SCENE, CAMERA MODES & DRAMATIC LIGHTING
 // ============================================================================
 const container = document.getElementById('webgl-container');
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x9b8267, 0.011);
+scene.fog = new THREE.FogExp2(0x9b8267, 0.0105);
 
-const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 320);
+const camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 340);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.22;
+renderer.toneMappingExposure = 1.24;
 container.appendChild(renderer.domElement);
 
-// Procedural Stormy Golden-Hour Sky Dome
+// 4 User-Selectable Camera Presets (Including the exact 3/4 angle from Image 4!)
+const CAMERA_PRESETS = [
+  {
+    name: 'HERO 3/4',
+    desc: 'Cinematic 3/4 Angle (Shows Menelik Face & Kabba Profile)',
+    offsetX: 1.65,
+    offsetY: 4.55,
+    offsetZ: 7.6,
+    lookOffsetX: -0.25,
+    lookY: 2.75,
+    lookZ: -14,
+    showFgEars: true
+  },
+  {
+    name: 'CLOSE GTA',
+    desc: 'Close Over-The-Shoulder Action Camera',
+    offsetX: 0.55,
+    offsetY: 4.35,
+    offsetZ: 6.4,
+    lookOffsetX: 0.1,
+    lookY: 2.85,
+    lookZ: -16,
+    showFgEars: false
+  },
+  {
+    name: 'WIDE EPIC',
+    desc: 'Panoramic Battlefield View (Shows Allied Ridge Warriors)',
+    offsetX: 0.0,
+    offsetY: 6.4,
+    offsetZ: 11.2,
+    lookOffsetX: 0.0,
+    lookY: 2.5,
+    lookZ: -18,
+    showFgEars: true
+  },
+  {
+    name: '1ST PERSON',
+    desc: 'First-Person Rider POV Through the Horse Ears',
+    offsetX: 0.0,
+    offsetY: 4.25,
+    offsetZ: -0.35,
+    lookOffsetX: 0.0,
+    lookY: 3.1,
+    lookZ: -25,
+    showFgEars: false
+  }
+];
+let currentCamIndex = 0;
+
+// Procedural Stormy Golden-Hour Adwa Sky Dome
 function createSkyDome() {
   const c = document.createElement('canvas');
   c.width = 512; c.height = 512;
   const ctx = c.getContext('2d');
   const grad = ctx.createLinearGradient(0, 0, 0, 512);
-  grad.addColorStop(0, '#3a444c');
-  grad.addColorStop(0.35, '#7c7669');
-  grad.addColorStop(0.68, '#d4b78c');
+  grad.addColorStop(0, '#323c45');
+  grad.addColorStop(0.32, '#736d60');
+  grad.addColorStop(0.66, '#d6b88c');
   grad.addColorStop(1, '#9b8267');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 512, 512);
 
-  // Dramatic Sun Glow & Clouds
-  const sun = ctx.createRadialGradient(380, 210, 10, 380, 210, 180);
-  sun.addColorStop(0, 'rgba(255, 252, 230, 0.95)');
-  sun.addColorStop(0.4, 'rgba(255, 210, 130, 0.45)');
+  const sun = ctx.createRadialGradient(380, 195, 12, 380, 195, 190);
+  sun.addColorStop(0, 'rgba(255, 252, 232, 0.98)');
+  sun.addColorStop(0.38, 'rgba(255, 212, 130, 0.48)');
   sun.addColorStop(1, 'rgba(255, 200, 120, 0)');
   ctx.fillStyle = sun;
   ctx.fillRect(0, 0, 512, 512);
 
   const tex = new THREE.CanvasTexture(c);
-  const skyGeo = new THREE.SphereGeometry(260, 24, 16);
+  const skyGeo = new THREE.SphereGeometry(270, 24, 16);
   const skyMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false });
   scene.add(new THREE.Mesh(skyGeo, skyMat));
 }
 createSkyDome();
 
-const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x3d2e22, 0.72);
+const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x3d2e22, 0.78);
 scene.add(hemiLight);
 
-const sunLight = new THREE.DirectionalLight(0xffe4b5, 1.65);
-sunLight.position.set(42, 68, -60);
+const sunLight = new THREE.DirectionalLight(0xffe4b5, 1.7);
+sunLight.position.set(45, 72, -55);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 2048;
 sunLight.shadow.mapSize.height = 2048;
-const d = 40;
+const d = 42;
 sunLight.shadow.camera.left = -d;
 sunLight.shadow.camera.right = d;
 sunLight.shadow.camera.top = d;
 sunLight.shadow.camera.bottom = -d;
 scene.add(sunLight);
 
-const stGeorgeLight = new THREE.PointLight(0xffe066, 0, 38);
+const stGeorgeLight = new THREE.PointLight(0xffe066, 0, 42);
 scene.add(stGeorgeLight);
 
 // ============================================================================
-// 2. PROCEDURAL HIGH-DETAIL TEXTURES (KABBA EMBROIDERY, ROCK & HORSE COAT)
+// 2. PROCEDURAL TEXTURES (TAILORED KABBA EMBROIDERY, FACE DETAILS & ROCKS)
 // ============================================================================
-function createKabbaTexture() {
+function createTailoredKabbaTexture() {
   const c = document.createElement('canvas');
   c.width = 512; c.height = 512;
   const ctx = c.getContext('2d');
-  ctx.fillStyle = '#14110f';
+  // Rich velvet black-charcoal fabric base
+  ctx.fillStyle = '#12100e';
   ctx.fillRect(0, 0, 512, 512);
 
-  // Ornate Ethiopian Golden Embroidery Patterns (Matching Image 4 Cloak)
   ctx.strokeStyle = '#d4af37';
   ctx.fillStyle = '#ffd700';
-  ctx.lineWidth = 5;
 
-  // Border filigree
-  ctx.strokeRect(18, 18, 476, 476);
-  ctx.strokeRect(32, 32, 448, 448);
+  // Golden collar border at the top (shoulder neckline)
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.moveTo(0, 24);
+  ctx.lineTo(512, 24);
+  ctx.stroke();
 
-  // Central Royal Cross & Sunburst Motif
+  // Intricate Ethiopian royal filigree down the back of the cloak (Image 4 match)
   ctx.save();
-  ctx.translate(256, 210);
+  ctx.translate(256, 200);
+  ctx.lineWidth = 4.5;
   for (let i = 0; i < 12; i++) {
     ctx.rotate(Math.PI / 6);
     ctx.beginPath();
-    ctx.moveTo(0, 25);
-    ctx.lineTo(12, 75);
-    ctx.lineTo(0, 95);
-    ctx.lineTo(-12, 75);
+    ctx.moveTo(0, 22);
+    ctx.lineTo(14, 78);
+    ctx.lineTo(0, 108);
+    ctx.lineTo(-14, 78);
     ctx.closePath();
     ctx.stroke();
   }
   ctx.beginPath();
-  ctx.arc(0, 0, 28, 0, Math.PI * 2);
+  ctx.arc(0, 0, 24, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // Bottom hem intricate diamond weave
-  for (let x = 36; x < 476; x += 28) {
+  // Ornate golden hem border along the bottom curved edge
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(0, 465);
+  ctx.lineTo(512, 465);
+  ctx.stroke();
+
+  ctx.lineWidth = 3.5;
+  for (let x = 0; x < 512; x += 32) {
     ctx.beginPath();
-    ctx.moveTo(x, 440);
-    ctx.lineTo(x + 14, 418);
-    ctx.lineTo(x + 28, 440);
-    ctx.lineTo(x + 14, 462);
+    ctx.moveTo(x, 465);
+    ctx.lineTo(x + 16, 432);
+    ctx.lineTo(x + 32, 465);
+    ctx.lineTo(x + 16, 496);
     ctx.closePath();
     ctx.stroke();
   }
+
   return new THREE.CanvasTexture(c);
 }
 
@@ -467,9 +549,9 @@ function createCanyonRockTexture() {
   ctx.fillStyle = '#735a43';
   ctx.fillRect(0, 0, 512, 512);
 
-  for (let i = 0; i < 6000; i++) {
+  for (let i = 0; i < 6500; i++) {
     const v = Math.random();
-    ctx.fillStyle = v > 0.6 ? 'rgba(42, 30, 20, 0.45)' : (v > 0.25 ? 'rgba(145, 118, 90, 0.35)' : 'rgba(95, 105, 65, 0.28)');
+    ctx.fillStyle = v > 0.6 ? 'rgba(40, 28, 18, 0.45)' : (v > 0.25 ? 'rgba(148, 120, 92, 0.36)' : 'rgba(90, 102, 62, 0.28)');
     ctx.fillRect(Math.random() * 512, Math.random() * 512, 2 + Math.random() * 8, 2 + Math.random() * 5);
   }
   const tex = new THREE.CanvasTexture(c);
@@ -480,24 +562,24 @@ function createCanyonRockTexture() {
 }
 
 const rockTex = createCanyonRockTexture();
-const kabbaTex = createKabbaTexture();
+const kabbaTex = createTailoredKabbaTexture();
 
 const mats = {
-  whiteSteed: new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.48, metalness: 0.05 }),
-  baySteed: new THREE.MeshStandardMaterial({ color: 0x4a2511, roughness: 0.55 }),
-  hoofDark: new THREE.MeshStandardMaterial({ color: 0x1c1815, roughness: 0.8 }),
-  goldRoyal: new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.22, metalness: 0.88 }),
-  crimsonTassel: new THREE.MeshStandardMaterial({ color: 0xa31515, roughness: 0.6 }),
+  whiteSteed: new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.45, metalness: 0.05 }),
+  baySteed: new THREE.MeshStandardMaterial({ color: 0x4a2511, roughness: 0.52 }),
+  hoofDark: new THREE.MeshStandardMaterial({ color: 0x1a1613, roughness: 0.8 }),
+  goldRoyal: new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.2, metalness: 0.9 }),
+  crimsonTassel: new THREE.MeshStandardMaterial({ color: 0xa81414, roughness: 0.55 }),
   kabbaCloak: new THREE.MeshStandardMaterial({
     map: kabbaTex,
-    roughness: 0.65,
-    metalness: 0.25,
+    roughness: 0.6,
+    metalness: 0.28,
     side: THREE.DoubleSide
   }),
-  skinTone: new THREE.MeshStandardMaterial({ color: 0x4f301d, roughness: 0.6 }),
-  whiteKemis: new THREE.MeshStandardMaterial({ color: 0xf2ece1, roughness: 0.8 }),
-  forgedSteel: new THREE.MeshStandardMaterial({ color: 0xe8f0f8, roughness: 0.14, metalness: 0.94 }),
-  gashaShield: new THREE.MeshStandardMaterial({ color: 0x2b170b, roughness: 0.5, metalness: 0.3 }),
+  skinTone: new THREE.MeshStandardMaterial({ color: 0x52321e, roughness: 0.55 }),
+  whiteKemis: new THREE.MeshStandardMaterial({ color: 0xf2ece1, roughness: 0.78 }),
+  forgedSteel: new THREE.MeshStandardMaterial({ color: 0xeaf2fa, roughness: 0.12, metalness: 0.95 }),
+  gashaShield: new THREE.MeshStandardMaterial({ color: 0x2b170b, roughness: 0.48, metalness: 0.32 }),
   colonialKhaki: new THREE.MeshStandardMaterial({ color: 0x9c8b6e, roughness: 0.85 }),
   pithHelmet: new THREE.MeshStandardMaterial({ color: 0xd8cbb3, roughness: 0.75 }),
   rifleWood: new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.7 }),
@@ -505,29 +587,73 @@ const mats = {
   etherealGeorge: new THREE.MeshBasicMaterial({
     color: 0xfff099,
     transparent: true,
-    opacity: 0.82,
+    opacity: 0.84,
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide
   }),
   lightningMat: new THREE.MeshBasicMaterial({
     color: 0xffffff,
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.96,
     blending: THREE.AdditiveBlending
   })
 };
 
 // ============================================================================
-// 3. CONTINUOUS CRAGGY SOLODA CANYON TERRAIN & BOULDERS (NO PYRAMIDS!)
+// 3. CRAGGY SOLODA CANYON TERRAIN & ALLIED ETHIOPIAN WARRIORS ON SLOPES
 // ============================================================================
 const terrainChunks = [];
+const alliedWarriors = [];
 const CHUNK_LEN = 120;
+
+function buildAlliedEthiopianWarrior() {
+  const wGroup = new THREE.Group();
+
+  // White traditional Shemma tunic & trousers
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, 1.15, 8), mats.whiteKemis);
+  torso.position.y = 1.35;
+  torso.castShadow = true;
+  wGroup.add(torso);
+
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), mats.skinTone);
+  head.position.y = 2.1;
+  wGroup.add(head);
+
+  const headband = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.08, 10), mats.whiteKemis);
+  headband.position.y = 2.16;
+  wGroup.add(headband);
+
+  // Sprinting Legs
+  const legs = [];
+  [-0.16, 0.16].forEach(lx => {
+    const lp = new THREE.Group();
+    lp.position.set(lx, 0.82, 0);
+    const lm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.82, 8), mats.skinTone);
+    lm.position.y = -0.4;
+    lp.add(lm);
+    wGroup.add(lp);
+    legs.push(lp);
+  });
+
+  // Upraised Traditional Spear & Gasha Shield
+  const spear = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.3, 6), mats.rifleWood);
+  spear.position.set(0.32, 1.85, -0.1);
+  spear.rotation.x = -0.65;
+  wGroup.add(spear);
+
+  const shield = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.16, 12), mats.gashaShield);
+  shield.rotation.z = Math.PI / 2.2;
+  shield.position.set(-0.35, 1.4, -0.1);
+  wGroup.add(shield);
+
+  wGroup.userData = { legs, phase: Math.random() * 10 };
+  return wGroup;
+}
 
 function buildCanyonChunk(zOffset) {
   const chunkGroup = new THREE.Group();
   chunkGroup.position.z = zOffset;
 
-  // Displaced Canyon Floor + Steep Craggy Walls
   const geo = new THREE.PlaneGeometry(110, CHUNK_LEN, 44, 48);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
@@ -538,11 +664,9 @@ function buildCanyonChunk(zOffset) {
     const distFromCenter = Math.abs(x);
 
     if (distFromCenter < 7.2) {
-      // Uneven rocky trail surface
       const roadBump = Math.sin(x * 1.5) * Math.cos(z * 0.8) * 0.14;
       pos.setY(i, roadBump);
     } else {
-      // Craggy stratified canyon cliffs rising steeply on both sides
       const wallFactor = distFromCenter - 7.2;
       const ridgeNoise =
         Math.sin(z * 0.18 + x * 0.25) * 3.2 +
@@ -565,9 +689,9 @@ function buildCanyonChunk(zOffset) {
   mesh.castShadow = true;
   chunkGroup.add(mesh);
 
-  // Scatter Realistic Embedded Boulders & Scrub Bushes along Trail Edges
+  // Embedded Boulders along Trail
   const boulderGeo = new THREE.DodecahedronGeometry(1, 1);
-  for (let i = 0; i < 38; i++) {
+  for (let i = 0; i < 36; i++) {
     const side = i % 2 === 0 ? -1 : 1;
     const bMesh = new THREE.Mesh(boulderGeo, canyonMat);
     const sx = 0.6 + Math.random() * 1.6;
@@ -593,8 +717,16 @@ for (let i = 0; i < 3; i++) {
   terrainChunks.push(buildCanyonChunk(-i * CHUNK_LEN));
 }
 
+// Spawn Allied Ethiopian Warriors charging along the left canyon ridge (Exact match to Image 4!)
+for (let i = 0; i < 8; i++) {
+  const ally = buildAlliedEthiopianWarrior();
+  ally.position.set(-7.8 - (i % 3) * 1.8, 1.6 + (i % 3) * 1.3, -i * 16);
+  scene.add(ally);
+  alliedWarriors.push(ally);
+}
+
 // ============================================================================
-// 4. ORGANIC SCULPTED HORSE ANATOMY & ROYAL HARNESS (NO MORE MINECRAFT BOXES!)
+// 4. ORGANIC SCULPTED HORSE ANATOMY & ROYAL HARNESS
 // ============================================================================
 function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   const root = new THREE.Group();
@@ -602,14 +734,12 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   bodyGroup.position.y = 2.05;
   root.add(bodyGroup);
 
-  // Muscular Chest (Lathe/Sphere blend)
   const chest = new THREE.Mesh(new THREE.SphereGeometry(0.68, 16, 14), coatMat);
   chest.scale.set(0.92, 1.05, 1.15);
   chest.position.set(0, 0.1, -0.95);
   chest.castShadow = true;
   bodyGroup.add(chest);
 
-  // Rounded Ribcage / Barrel
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.65, 1.65, 16), coatMat);
   barrel.rotation.x = Math.PI / 2;
   barrel.scale.set(0.95, 1, 1.08);
@@ -617,30 +747,28 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   barrel.castShadow = true;
   bodyGroup.add(barrel);
 
-  // Muscular Croup / Hindquarters (Matching rounded white horse rump in Image 4)
   const croup = new THREE.Mesh(new THREE.SphereGeometry(0.69, 16, 14), coatMat);
   croup.scale.set(0.96, 1.08, 1.22);
   croup.position.set(0, 0.18, 0.92);
   croup.castShadow = true;
   bodyGroup.add(croup);
 
-  // Royal Ethiopian Crupper Straps, Gold Medallions & Red Silk Tassels (Exact match to Image 4)
   if (isRoyalSteed) {
-    // Embroidered Red & Gold Saddle Pad
-    const saddlePad = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.72, 1.25, 16, 1, false, -Math.PI * 0.65, Math.PI * 1.3), mats.crimsonTassel);
+    const saddlePad = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.68, 0.72, 1.25, 16, 1, false, -Math.PI * 0.65, Math.PI * 1.3),
+      mats.crimsonTassel
+    );
     saddlePad.rotation.z = Math.PI / 2;
     saddlePad.rotation.y = Math.PI / 2;
     saddlePad.position.set(0, 0.22, -0.05);
     bodyGroup.add(saddlePad);
 
-    // Crupper Harness Arch over Hindquarters
     const harnessStrap = new THREE.Mesh(new THREE.TorusGeometry(0.69, 0.045, 8, 20, Math.PI), mats.goldRoyal);
     harnessStrap.rotation.x = 0.35;
     harnessStrap.position.set(0, 0.15, 0.88);
     bodyGroup.add(harnessStrap);
 
-    // Hanging Golden Medallions & Red Tassels on Hindquarters
-    [-0.56, -0.32, 0.32, 0.56].forEach((tx, idx) => {
+    [-0.56, -0.32, 0.32, 0.56].forEach((tx) => {
       const zOff = Math.abs(tx) > 0.4 ? 0.65 : 1.05;
       const med = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.04, 12), mats.goldRoyal);
       med.rotation.z = Math.PI / 2;
@@ -653,7 +781,6 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
     });
   }
 
-  // Sculpted Arched Neck & Tapered Head
   const neckPivot = new THREE.Group();
   neckPivot.position.set(0, 0.35, -1.25);
   bodyGroup.add(neckPivot);
@@ -664,7 +791,6 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   neck.castShadow = true;
   neckPivot.add(neck);
 
-  // Flowing Horse Mane along Neck
   for (let m = 0; m < 6; m++) {
     const locks = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.45, 6), coatMat);
     locks.position.set(0, 0.25 + m * 0.16, -0.05 - m * 0.08);
@@ -694,13 +820,11 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   });
 
   if (isRoyalSteed) {
-    // Golden Bridle & Reins
     const noseband = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.025, 6, 14), mats.goldRoyal);
     noseband.position.set(0, -0.06, -0.45);
     headGroup.add(noseband);
   }
 
-  // Lush Multi-Strand Flowing Tail (No more grey cone!)
   const tailPivot = new THREE.Group();
   tailPivot.position.set(0, 0.32, 1.55);
   bodyGroup.add(tailPivot);
@@ -713,11 +837,10 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
     tailPivot.add(strand);
   }
 
-  // 4 Multi-Jointed Anatomical Legs (Thigh/Shoulder -> Knee/Hock -> Cannon -> Hoof)
   const legs = [];
   const legPositions = [
-    [-0.42, -0.1, -1.05], [0.42, -0.1, -1.05], // Front Left, Front Right
-    [-0.44, -0.05, 1.02], [0.44, -0.05, 1.02]  // Back Left, Back Right
+    [-0.42, -0.1, -1.05], [0.42, -0.1, -1.05],
+    [-0.44, -0.05, 1.02], [0.44, -0.05, 1.02]
   ];
 
   legPositions.forEach(([lx, ly, lz], idx) => {
@@ -754,17 +877,32 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
 }
 
 // ============================================================================
-// 5. REALISTIC CURVED ETHIOPIAN SHOTEL SWORD, GASHA SHIELD & BILLOWING KABBA
+// 5. TAILORED CONICAL KABBA CLOAK (NO RECTANGLE, NEVER COVERS FACE!)
 // ============================================================================
+function createTailoredConicalKabba() {
+  // Open-ended conical cape: narrow collar at shoulders (r=0.39), wide flowing hem (r=0.98)
+  // Height = 1.62, shifted DOWN so top edge is strictly at y=0 (shoulder line) and bottom is at y=-1.62!
+  const capeGeo = new THREE.CylinderGeometry(0.39, 0.98, 1.62, 28, 18, true, -Math.PI * 0.72, Math.PI * 1.44);
+  capeGeo.translate(0, -0.81, 0); // Top rim is now at y = 0.0! It can NEVER rise above the shoulders!
+  capeGeo.rotateY(Math.PI);       // Open front, full royal drape across back and shoulders
+
+  const origPos = capeGeo.attributes.position.clone();
+  const capeMesh = new THREE.Mesh(capeGeo, mats.kabbaCloak);
+  capeMesh.position.set(0, 1.12, 0.02); // Pinned strictly at shoulder height (Head is at y=1.38!)
+  capeMesh.castShadow = true;
+  capeMesh.receiveShadow = true;
+
+  return { capeMesh, capeGeo, origPos };
+}
+
 function createAuthenticShotelSword() {
   const swordGroup = new THREE.Group();
 
-  // Carved Horn & Gold Pommel + Grip
-  const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 10), mats.goldRoyal);
+  const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 10), mats.goldRoyal);
   pommel.position.y = -0.24;
   swordGroup.add(pommel);
 
-  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 0.36, 10), mats.gashaShield);
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.36, 10), mats.gashaShield);
   grip.position.y = -0.04;
   swordGroup.add(grip);
 
@@ -772,25 +910,22 @@ function createAuthenticShotelSword() {
   crossguard.position.y = 0.15;
   swordGroup.add(crossguard);
 
-  // Curved Sickle-like Shotel Blade built from segments along a curve
-  const bladeSegments = 10;
+  const bladeSegments = 12;
   for (let i = 0; i < bladeSegments; i++) {
     const t = i / bladeSegments;
-    const segLen = 0.22;
-    const width = (1 - t * 0.65) * 0.13;
-    const seg = new THREE.Mesh(new THREE.BoxGeometry(0.028, segLen, width), mats.forgedSteel);
+    const segLen = 0.2;
+    const width = (1 - t * 0.68) * 0.135;
+    const seg = new THREE.Mesh(new THREE.BoxGeometry(0.026, segLen, width), mats.forgedSteel);
 
-    // Curve forward and hook slightly like an authentic Ethiopian Shotel
-    const yPos = 0.26 + i * 0.19;
-    const zCurve = -Math.pow(t, 1.75) * 0.68;
+    const yPos = 0.25 + i * 0.175;
+    const zCurve = -Math.pow(t, 1.75) * 0.72;
     seg.position.set(0, yPos, zCurve);
-    seg.rotation.x = -t * 0.62;
+    seg.rotation.x = -t * 0.64;
     swordGroup.add(seg);
   }
 
-  // Blade Tip Tracker for 3D Slash Ribbon
   const tipNode = new THREE.Object3D();
-  tipNode.position.set(0, 2.15, -0.72);
+  tipNode.position.set(0, 2.25, -0.76);
   swordGroup.add(tipNode);
 
   const baseNode = new THREE.Object3D();
@@ -800,19 +935,17 @@ function createAuthenticShotelSword() {
   return { swordGroup, tipNode, baseNode };
 }
 
-// Build Player Root & Sculpted White Royal Steed
+// Assemble Player Root, Steed & Emperor Menelik II
 const playerRoot = new THREE.Group();
 scene.add(playerRoot);
 
 const heroSteed = buildSculptedHorse(mats.whiteSteed, true);
 playerRoot.add(heroSteed.root);
 
-// Build Emperor Menelik II Rider
 const riderGroup = new THREE.Group();
 riderGroup.position.set(0, 2.55, -0.08);
 playerRoot.add(riderGroup);
 
-// White Kemis Trousers & Riding Boots
 const riderLegs = [];
 [-0.36, 0.36].forEach(lx => {
   const legPivot = new THREE.Group();
@@ -831,47 +964,73 @@ const riderLegs = [];
   riderLegs.push(legPivot);
 });
 
-// Upper Torso Pivot (Twists naturally during sword slashes!)
 const torsoPivot = new THREE.Group();
 torsoPivot.position.y = 0.1;
 riderGroup.add(torsoPivot);
 
-const torsoMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.44, 1.15, 12), mats.kabbaCloak);
+const torsoMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 1.12, 14), mats.kabbaCloak);
 torsoMesh.position.y = 0.55;
 torsoMesh.castShadow = true;
 torsoPivot.add(torsoMesh);
 
-// Dynamic Vertex-Animated Billowing Kabba Cloak (Exact drape from Image 4)
-const cloakGeo = new THREE.PlaneGeometry(1.55, 1.95, 12, 16);
-const cloakOrigPos = cloakGeo.attributes.position.clone();
-const cloakMesh = new THREE.Mesh(cloakGeo, mats.kabbaCloak);
-cloakMesh.position.set(0, 1.05, 0.28);
-cloakMesh.castShadow = true;
-torsoPivot.add(cloakMesh);
+// Golden Shoulder Epaulettes / Collar Ring
+const collarGold = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.045, 8, 20), mats.goldRoyal);
+collarGold.rotation.x = Math.PI / 2;
+collarGold.position.set(0, 1.1, 0);
+torsoPivot.add(collarGold);
 
-// Sculpted Head, Beard & Imperial Gold Crown Over White Ras Scarf
+// Attach Tailored Conical Kabba Cloak (Drapes down from shoulders over horse rump!)
+const tailoredKabba = createTailoredConicalKabba();
+torsoPivot.add(tailoredKabba.capeMesh);
+
+// Detailed Sculpted Head, Eyes, Nose, Beard & Imperial Crown (100% Unobstructed!)
 const headGroup = new THREE.Group();
-headGroup.position.y = 1.32;
+headGroup.position.set(0, 1.4, -0.04);
 torsoPivot.add(headGroup);
 
-const headSphere = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 14), mats.skinTone);
+const neckColumn = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.28, 12), mats.skinTone);
+neckColumn.position.y = -0.18;
+headGroup.add(neckColumn);
+
+const headSphere = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 16), mats.skinTone);
+headSphere.scale.set(0.94, 1.04, 1.0);
 headGroup.add(headSphere);
 
-const beard = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 10), mats.hoofDark);
-beard.scale.set(0.95, 0.85, 0.95);
-beard.position.set(0, -0.09, -0.04);
+// Nose Bridge & Eyes (Visible in 3/4 Hero Camera!)
+const noseMesh = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.15, 8), mats.skinTone);
+noseMesh.rotation.x = -Math.PI / 2;
+noseMesh.position.set(0, 0.0, -0.27);
+headGroup.add(noseMesh);
+
+[-0.09, 0.09].forEach(ex => {
+  const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), mats.whiteKemis);
+  eyeWhite.position.set(ex, 0.05, -0.235);
+  headGroup.add(eyeWhite);
+  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), mats.hoofDark);
+  pupil.position.set(ex, 0.05, -0.258);
+  headGroup.add(pupil);
+});
+
+// Sculpted Royal Beard & Mustache
+const beard = new THREE.Mesh(new THREE.SphereGeometry(0.255, 14, 12), mats.hoofDark);
+beard.scale.set(0.94, 0.82, 0.96);
+beard.position.set(0, -0.1, -0.04);
 headGroup.add(beard);
 
-// White cloth scarf under gold crown (Matching Image 4)
-const rasScarf = new THREE.Mesh(new THREE.CylinderGeometry(0.275, 0.275, 0.14, 16), mats.whiteKemis);
-rasScarf.position.y = 0.08;
+// White Ras Headband Scarf + Ornate Golden Imperial Crown
+const rasScarf = new THREE.Mesh(new THREE.CylinderGeometry(0.275, 0.27, 0.12, 18), mats.whiteKemis);
+rasScarf.position.y = 0.1;
 headGroup.add(rasScarf);
 
-const crownHat = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.26, 0.28, 16), mats.goldRoyal);
-crownHat.position.y = 0.24;
-headGroup.add(crownHat);
+const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.295, 0.265, 0.26, 18), mats.goldRoyal);
+crownBase.position.y = 0.25;
+headGroup.add(crownBase);
 
-// Left Arm holding Traditional Conical Ethiopian Gasha Shield
+const crownDome = new THREE.Mesh(new THREE.SphereGeometry(0.27, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), mats.goldRoyal);
+crownDome.position.y = 0.36;
+headGroup.add(crownDome);
+
+// Left Arm + Conical Ethiopian Gasha Shield
 const leftArm = new THREE.Group();
 leftArm.position.set(-0.46, 0.98, 0);
 torsoPivot.add(leftArm);
@@ -884,7 +1043,7 @@ shieldBoss.position.y = 0.11;
 gashaShield.add(shieldBoss);
 leftArm.add(gashaShield);
 
-// Multi-Jointed Right Combat Arm (Shoulder -> Elbow -> Wrist -> Curved Shotel Sword)
+// Multi-Jointed Right Combat Arm
 const rightShoulder = new THREE.Group();
 rightShoulder.position.set(0.48, 1.02, 0);
 torsoPivot.add(rightShoulder);
@@ -909,7 +1068,23 @@ const shotelObj = createAuthenticShotelSword();
 shotelObj.swordGroup.rotation.x = Math.PI / 2;
 rightWrist.add(shotelObj.swordGroup);
 
-// Dynamic 3D Sword Slash Trail Ribbon
+// Optional GitHub GLTF Loader Hook
+if (ASSET_CONFIG.USE_GITHUB_GLB_MODELS && THREE.GLTFLoader) {
+  const loader = new THREE.GLTFLoader();
+  loader.load(ASSET_CONFIG.HORSE_GLB_URL, (gltf) => {
+    heroSteed.root.visible = false;
+    const model = gltf.scene;
+    model.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; } });
+    playerRoot.add(model);
+    if (gltf.animations && gltf.animations.length > 0) {
+      const mixer = new THREE.AnimationMixer(model);
+      mixer.clipAction(gltf.animations[0]).play();
+      gltfMixers.push(mixer);
+    }
+  });
+}
+
+// 3D Sword Slash Trail Ribbon
 const TRAIL_MAX = 14;
 const trailPoints = [];
 const trailGeo = new THREE.BufferGeometry();
@@ -918,11 +1093,10 @@ trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
 const trailMat = new THREE.MeshBasicMaterial({
   color: 0xfffae0,
   transparent: true,
-  opacity: 0.75,
+  opacity: 0.78,
   side: THREE.DoubleSide,
   blending: THREE.AdditiveBlending
 });
-// Build triangle strip indices
 const trailIndices = [];
 for (let i = 0; i < TRAIL_MAX - 1; i++) {
   const a = i * 2, b = a + 1, c = a + 2, d = a + 3;
@@ -934,20 +1108,18 @@ slashTrailMesh.frustumCulled = false;
 scene.add(slashTrailMesh);
 
 // ============================================================================
-// 6. OVERHEAD ETHEREAL SAINT GEORGE APPARITION & LIGHTNING (EXACT IMAGE 4 MATCH!)
+// 6. OVERHEAD ETHEREAL SAINT GEORGE APPARITION & LIGHTNING (IMAGE 4 MATCH)
 // ============================================================================
 const stGeorgePhantom = new THREE.Group();
-stGeorgePhantom.position.set(-0.8, 5.2, -2.5);
+stGeorgePhantom.position.set(-0.85, 5.1, -2.4);
 stGeorgePhantom.scale.set(1.22, 1.22, 1.22);
 stGeorgePhantom.visible = false;
 playerRoot.add(stGeorgePhantom);
 
-// Spectral White Steed rearing in the sky
 const phantomSteed = buildSculptedHorse(mats.etherealGeorge, false);
-phantomSteed.root.rotation.x = -0.35; // Rearing pose
+phantomSteed.root.rotation.x = -0.35;
 stGeorgePhantom.add(phantomSteed.root);
 
-// Radiant Saint George Figure Hurling Golden Spear Overhead
 const phantomRider = new THREE.Group();
 phantomRider.position.set(0, 2.6, 0);
 stGeorgePhantom.add(phantomRider);
@@ -960,7 +1132,6 @@ const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 12), mats.ethere
 pHead.position.y = 1.45;
 phantomRider.add(pHead);
 
-// Crested Roman/Byzantine Saint George Helmet & Glowing Halo (From Image 4)
 const pCrest = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.09, 8, 16, Math.PI), mats.etherealGeorge);
 pCrest.rotation.y = Math.PI / 2;
 pCrest.position.set(0, 1.62, 0);
@@ -970,10 +1141,9 @@ const pHalo = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.68, 24), mats.lightn
 pHalo.position.set(0, 1.5, 0.15);
 phantomRider.add(pHalo);
 
-// Upraised Arm Hurling the Blinding Spear of Light Downward (Matching Image 4 angle)
 const pSpearGroup = new THREE.Group();
 pSpearGroup.position.set(0.55, 1.65, -0.2);
-pSpearGroup.rotation.x = -0.68; // Aimed diagonally down toward enemy ranks
+pSpearGroup.rotation.x = -0.68;
 pSpearGroup.rotation.z = -0.22;
 phantomRider.add(pSpearGroup);
 
@@ -987,26 +1157,24 @@ spearHead.rotation.x = -Math.PI / 2;
 spearHead.position.z = -6.2;
 pSpearGroup.add(spearHead);
 
-// Dynamic 3D Jagged Lightning Bolts around Saint George
 const lightningBolts = [];
 for (let b = 0; b < 5; b++) {
   const pts = [];
   for (let s = 0; s < 8; s++) pts.push(new THREE.Vector3(0, s * 0.8, 0));
   const lGeo = new THREE.BufferGeometry().setFromPoints(pts);
-  const line = new THREE.Line(lGeo, new THREE.LineBasicMaterial({ color: 0xfff8b0, linewidth: 2 }));
+  const line = new THREE.Line(lGeo, new THREE.LineBasicMaterial({ color: 0xfff8b0 }));
   stGeorgePhantom.add(line);
   lightningBolts.push(line);
 }
 
 // ============================================================================
-// 7. FOREGROUND COMPANION HORSE HEAD (BOTTOM OF SCREEN CAMERA PERSPECTIVE)
+// 7. FOREGROUND COMPANION HORSE EARS (BOTTOM OF SCREEN)
 // ============================================================================
 const fgHorseHead = new THREE.Group();
 const fgCranium = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 12), mats.baySteed);
 fgCranium.scale.set(0.88, 0.9, 1.25);
 fgHorseHead.add(fgCranium);
 
-// Dark Forelock Mane between Ears
 for (let i = -2; i <= 2; i++) {
   const lock = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.38, 6), mats.hoofDark);
   lock.position.set(i * 0.06, 0.32, -0.1);
@@ -1014,13 +1182,11 @@ for (let i = -2; i <= 2; i++) {
   fgHorseHead.add(lock);
 }
 
-// Bridle Strap across Brow
 const fgBrowStrap = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.025, 6, 16, Math.PI), mats.hoofDark);
 fgBrowStrap.rotation.x = 1.2;
 fgBrowStrap.position.set(0, 0.12, -0.15);
 fgHorseHead.add(fgBrowStrap);
 
-// Sculpted Pointed Horse Ears
 [-0.26, 0.26].forEach(ex => {
   const earGroup = new THREE.Group();
   earGroup.position.set(ex, 0.34, 0.05);
@@ -1034,7 +1200,7 @@ fgHorseHead.add(fgBrowStrap);
 scene.add(fgHorseHead);
 
 // ============================================================================
-// 8. VOLUMETRIC CANYON DUST CLOUDS & FLYING EMBERS
+// 8. VOLUMETRIC CANYON DUST CLOUDS
 // ============================================================================
 function createSoftSmokeTexture() {
   const c = document.createElement('canvas');
@@ -1088,7 +1254,6 @@ function buildRealisticEnemy(isCavalry) {
     head.position.y = 1.28;
     rider.add(head);
 
-    // Colonial Pith Helmet with Brim
     const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.45, 0.06, 12), mats.pithHelmet);
     brim.position.y = 1.38;
     rider.add(brim);
@@ -1096,7 +1261,6 @@ function buildRealisticEnemy(isCavalry) {
     dome.position.y = 1.38;
     rider.add(dome);
 
-    // Raised Cavalry Saber
     const saberArm = new THREE.Group();
     saberArm.position.set(-0.45, 0.95, 0);
     saberArm.rotation.x = -0.7;
@@ -1114,13 +1278,11 @@ function buildRealisticEnemy(isCavalry) {
       vx: 0, vy: 0, vz: 0, rx: 0, rz: 0
     };
   } else {
-    // Aiming Colonial Rifleman Infantry (Matching Right Foreground Soldiers in Image 4)
     const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.15, 10), mats.colonialKhaki);
     torso.position.y = 1.45;
     torso.castShadow = true;
     eRoot.add(torso);
 
-    // Crossed Chest Bandolier Straps
     const strap = new THREE.Mesh(new THREE.BoxGeometry(0.76, 1.1, 0.45), mats.rifleWood);
     strap.scale.set(1.02, 0.15, 1.02);
     strap.rotation.z = 0.65;
@@ -1138,7 +1300,6 @@ function buildRealisticEnemy(isCavalry) {
     dome.position.y = 2.32;
     eRoot.add(dome);
 
-    // Legs
     const legs = [];
     [-0.2, 0.2].forEach(lx => {
       const lp = new THREE.Group();
@@ -1150,7 +1311,6 @@ function buildRealisticEnemy(isCavalry) {
       legs.push(lp);
     });
 
-    // Detailed Bolt-Action Rifle + Steel Bayonet Aimed Forward
     const rifleGroup = new THREE.Group();
     rifleGroup.position.set(0.32, 1.68, -0.35);
     const stock = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.16, 1.35), mats.rifleWood);
@@ -1174,18 +1334,18 @@ function buildRealisticEnemy(isCavalry) {
     };
   }
 
-  eRoot.rotation.y = Math.PI; // Face toward charging player
+  eRoot.rotation.y = Math.PI;
   return eRoot;
 }
 
 // ============================================================================
-// 10. GAMEPLAY STATE, REALISTIC IK SWORD SLASH & CONTROLS
+// 10. GAMEPLAY STATE, CAMERA PREFERENCE SWITCHER & CONTROLS
 // ============================================================================
 const LANES = [-3.8, 0, 3.8];
 let currentLane = 1;
 
 const state = {
-  mode: 'MOUNTED', // 'MOUNTED', 'ON_FOOT', 'ST_GEORGE'
+  mode: 'MOUNTED',
   hp: 100,
   score: 0,
   kills: 0,
@@ -1196,8 +1356,8 @@ const state = {
   y: 0,
   vy: 0,
   isJumping: false,
-  slashProgress: 0, // 0 = idle, 0.01 -> 1.0 = 3-stage realistic slash
-  comboSide: 1,     // Alternates Forehand Cleave (1) and Backhand Cleave (-1)
+  slashProgress: 0,
+  comboSide: 1,
   invincible: 0,
   paused: false,
   gameOver: false,
@@ -1214,8 +1374,21 @@ function showBanner(title, sub) {
   document.getElementById('banner-title').textContent = title;
   document.getElementById('banner-sub').textContent = sub;
   b.classList.add('show');
-  setTimeout(() => b.classList.remove('show'), 2200);
+  setTimeout(() => b.classList.remove('show'), 2100);
 }
+
+// Cycle User Camera Preference
+function switchCameraPreference() {
+  currentCamIndex = (currentCamIndex + 1) % CAMERA_PRESETS.length;
+  const preset = CAMERA_PRESETS[currentCamIndex];
+  document.getElementById('cam-label').textContent = preset.name;
+  fgHorseHead.visible = preset.showFgEars;
+  // Hide rider head in 1st-person saddle view so it never blocks camera
+  riderGroup.visible = preset.name !== '1ST PERSON';
+  showBanner(`CAMERA: ${preset.name}`, preset.desc);
+}
+
+document.getElementById('cam-btn').addEventListener('click', switchCameraPreference);
 
 function moveLane(dir) {
   if (state.paused || state.gameOver) return;
@@ -1255,9 +1428,8 @@ function triggerStrike() {
   if (state.paused || state.gameOver) return;
   if (state.slashProgress === 0 || state.slashProgress > 0.65) {
     state.slashProgress = 0.01;
-    state.comboSide *= -1; // Alternate realistic diagonal forehand/backhand slashes!
+    state.comboSide *= -1;
 
-    // If Saint George is active, hurl a golden lightning spear bolt from overhead!
     if (state.mode === 'ST_GEORGE') {
       const boltGroup = new THREE.Group();
       const core = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 6.5, 8), mats.lightningMat);
@@ -1318,6 +1490,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') triggerJumpOrRemount();
   if (e.code === 'ArrowDown' || e.code === 'KeyS') triggerStanceToggle();
   if (e.code === 'KeyF' || e.code === 'Enter') triggerStrike();
+  if (e.code === 'KeyC') switchCameraPreference();
   if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
 });
 
@@ -1359,9 +1532,10 @@ window.addEventListener('resize', () => {
 });
 
 // ============================================================================
-// 12. REALISTIC KINEMATICS & RENDER LOOP
+// 12. REALISTIC KINEMATICS, TAILORED CLOAK CLOTH PHYSICS & RENDER LOOP
 // ============================================================================
 let frame = 0;
+const clock = new THREE.Clock();
 const tmpTip = new THREE.Vector3();
 const tmpBase = new THREE.Vector3();
 
@@ -1376,7 +1550,6 @@ function animateHorseGallop(horseObj, cyclePhase) {
     const p = cyclePhase + legOffsets[idx];
     const hipSwing = Math.sin(p) * 0.68;
     leg.hipJoint.rotation.x = hipSwing;
-    // Articulated knee/hock flexion when leg lifts forward
     const kneeBend = Math.max(0, Math.cos(p)) * (leg.isFront ? -0.85 : 0.85);
     leg.lowerJoint.rotation.x = kneeBend;
   });
@@ -1384,21 +1557,19 @@ function animateHorseGallop(horseObj, cyclePhase) {
 
 function updateRealisticSwordKinematics() {
   if (state.slashProgress > 0) {
-    state.slashProgress += 0.068; // Snappy, heavy sword physics
+    state.slashProgress += 0.068;
     const p = state.slashProgress;
     const dir = state.comboSide;
 
     if (p < 0.25) {
-      // Phase 1: Coiled Wind-up across shoulder
       const w = p / 0.25;
       torsoPivot.rotation.y = dir * 0.42 * w;
       rightShoulder.rotation.set(-0.85 * w, dir * 0.65 * w, -dir * 0.5 * w);
       rightElbow.rotation.x = -1.1 * w;
       rightWrist.rotation.z = dir * 0.4 * w;
     } else if (p < 0.68) {
-      // Phase 2: Explosive Diagonal Cavalry Cleave
       const s = (p - 0.25) / 0.43;
-      const ease = 1 - Math.pow(1 - s, 3); // Fast initial snap
+      const ease = 1 - Math.pow(1 - s, 3);
       torsoPivot.rotation.y = dir * (0.42 - 1.05 * ease);
       torsoPivot.rotation.x = 0.16 * Math.sin(ease * Math.PI);
       rightShoulder.rotation.set(
@@ -1409,7 +1580,6 @@ function updateRealisticSwordKinematics() {
       rightElbow.rotation.x = -1.1 + 0.95 * ease;
       rightWrist.rotation.x = 0.65 * ease;
     } else if (p < 1.0) {
-      // Phase 3: Smooth Follow-through Recovery to Cavalry Guard
       const r = (p - 0.68) / 0.32;
       torsoPivot.rotation.y *= (1 - r);
       torsoPivot.rotation.x *= (1 - r);
@@ -1422,14 +1592,12 @@ function updateRealisticSwordKinematics() {
       state.slashProgress = 0;
     }
 
-    // Record 3D Blade Tip & Base for Glowing Slash Ribbon
     shotelObj.tipNode.getWorldPosition(tmpTip);
     shotelObj.baseNode.getWorldPosition(tmpBase);
     trailPoints.unshift({ tip: tmpTip.clone(), base: tmpBase.clone() });
     if (trailPoints.length > TRAIL_MAX) trailPoints.pop();
     slashTrailMesh.visible = true;
   } else {
-    // Natural Breathing Cavalry Guard Stance (Never spins!)
     const sway = Math.sin(state.cycle) * 0.06;
     torsoPivot.rotation.set(0.05 + sway * 0.5, 0, 0);
     rightShoulder.rotation.set(-0.22 + sway, 0.22, -0.28);
@@ -1440,7 +1608,6 @@ function updateRealisticSwordKinematics() {
     slashTrailMesh.visible = trailPoints.length > 2;
   }
 
-  // Update Slash Ribbon BufferGeometry
   if (trailPoints.length > 1) {
     const posArr = trailGeo.attributes.position.array;
     for (let i = 0; i < TRAIL_MAX; i++) {
@@ -1457,13 +1624,15 @@ function animate() {
   requestAnimationFrame(animate);
   if (state.paused || state.gameOver) return;
 
+  const dt = clock.getDelta();
+  gltfMixers.forEach(m => m.update(dt));
+
   frame++;
   state.speed = Math.min(1.22, 0.68 + state.score * 0.00007);
   state.cycle += state.speed * 0.44;
   state.score += Math.floor(state.speed * 6);
   document.getElementById('score-display').textContent = state.score.toLocaleString();
 
-  // Recycle Continuous 3D Canyon Chunks
   terrainChunks.forEach(chunk => {
     chunk.position.z += state.speed;
     if (chunk.position.z > CHUNK_LEN) {
@@ -1471,282 +1640,17 @@ function animate() {
     }
   });
 
-  // Drift Volumetric Dust Clouds
+  // Animate Allied Ethiopian Warriors Sprinting Along Left Ridge
+  alliedWarriors.forEach(ally => {
+    const p = state.cycle * 1.3 + ally.userData.phase;
+    ally.userData.legs[0].rotation.x = Math.sin(p) * 0.75;
+    ally.userData.legs[1].rotation.x = -Math.sin(p) * 0.75;
+    ally.position.y = 1.7 + Math.abs(Math.cos(p)) * 0.15;
+  });
+
   dustClouds.forEach(d => {
     d.sprite.position.z += state.speed * 0.85;
     d.sprite.position.x += d.vx;
     if (d.sprite.position.z > 15) {
       d.sprite.position.z = -135;
-      d.sprite.position.x = (Math.random() - 0.5) * 16;
-    }
-  });
-
-  // Smooth Lane Switching & Banking
-  const targetX = LANES[currentLane];
-  const dxLane = targetX - playerRoot.position.x;
-  playerRoot.position.x += dxLane * 0.15;
-  playerRoot.rotation.z = -dxLane * 0.06;
-
-  // Vertical Jump Physics
-  playerRoot.position.y += state.vy;
-  if (playerRoot.position.y > 0) {
-    state.vy -= 0.02;
-  } else {
-    playerRoot.position.y = 0;
-    state.vy = 0;
-    state.isJumping = false;
-  }
-
-  // Animate Billowing Kabba Cloak Vertices in the Wind
-  const cPos = cloakGeo.attributes.position;
-  for (let i = 0; i < cPos.count; i++) {
-    const oy = cloakOrigPos.getY(i);
-    const ox = cloakOrigPos.getX(i);
-    // Top of cloak stays pinned to shoulders; bottom billows dramatically backward
-    const dropFactor = Math.max(0, (0.975 - oy) / 1.95);
-    const waveZ = Math.pow(dropFactor, 1.4) * 0.85 +
-                  Math.sin(state.cycle * 1.8 - dropFactor * 4 + ox * 2) * 0.16 * dropFactor;
-    cPos.setZ(i, waveZ);
-  }
-  cPos.needsUpdate = true;
-  cloakGeo.computeVertexNormals();
-
-  // Mounted vs Ground Infantry Positioning
-  if (state.mode === 'ON_FOOT') {
-    heroSteed.root.position.x += (-2.2 - heroSteed.root.position.x) * 0.12;
-    riderGroup.position.x += (0.55 - riderGroup.position.x) * 0.12;
-    riderGroup.position.y += (0.85 + Math.abs(Math.sin(state.cycle * 1.4)) * 0.18 - riderGroup.position.y) * 0.22;
-    riderLegs[0].rotation.x = Math.sin(state.cycle * 1.5) * 0.85;
-    riderLegs[1].rotation.x = -Math.sin(state.cycle * 1.5) * 0.85;
-  } else {
-    heroSteed.root.position.x += (0 - heroSteed.root.position.x) * 0.15;
-    riderGroup.position.x += (0 - riderGroup.position.x) * 0.15;
-    riderGroup.position.y += (2.55 + Math.sin(state.cycle) * 0.14 - riderGroup.position.y) * 0.25;
-    riderLegs[0].rotation.x = 0.28;
-    riderLegs[1].rotation.x = 0.28;
-  }
-
-  // Animate Sculpted Horse Gallop & Sword Kinematics
-  animateHorseGallop(heroSteed, state.cycle);
-  updateRealisticSwordKinematics();
-
-  // Animate Overhead Ethereal Saint George & Crackle Lightning Bolts (Image 4)
-  if (state.mode === 'ST_GEORGE') {
-    state.stGeorgeTimer--;
-    animateHorseGallop(phantomSteed, state.cycle * 1.15);
-    stGeorgeLight.position.set(playerRoot.position.x, playerRoot.position.y + 6, playerRoot.position.z - 2);
-
-    // Randomize jagged 3D lightning arcs every 3 frames
-    if (frame % 3 === 0) {
-      lightningBolts.forEach((line, bIdx) => {
-        const lPos = line.geometry.attributes.position;
-        const angle = (bIdx / lightningBolts.length) * Math.PI * 2 + frame * 0.1;
-        for (let s = 0; s < 8; s++) {
-          const jitter = s === 0 ? 0 : (Math.random() - 0.5) * 1.1;
-          lPos.setXYZ(
-            s,
-            Math.cos(angle) * (0.8 + s * 0.35) + jitter,
-            3.5 - s * 0.75,
-            Math.sin(angle) * (0.8 + s * 0.35) + jitter
-          );
-        }
-        lPos.needsUpdate = true;
-      });
-    }
-
-    document.getElementById('stgeorge-fill').style.width = `${(state.stGeorgeTimer / state.maxStGeorgeTime) * 100}%`;
-    if (state.stGeorgeTimer <= 0) {
-      state.mode = 'MOUNTED';
-      state.strikeCharge = 0;
-      stGeorgePhantom.visible = false;
-      stGeorgeLight.intensity = 0;
-      document.getElementById('stgeorge-fill').style.width = '0%';
-      syncModeHUD();
-    }
-  }
-
-  if (state.invincible > 0) state.invincible--;
-
-  // Spawn Enemy Forces
-  if (frame % Math.max(36, Math.floor(78 - state.speed * 28)) === 0) {
-    const laneIdx = Math.floor(Math.random() * 3);
-    const eMesh = buildRealisticEnemy(Math.random() > 0.45);
-    eMesh.position.set(LANES[laneIdx], 0, -145);
-    scene.add(eMesh);
-    enemies.push(eMesh);
-  }
-
-  // Update Saint George Spear Lightning Bolts
-  for (let i = spearBolts.length - 1; i >= 0; i--) {
-    const b = spearBolts[i];
-    b.mesh.position.z -= 2.8;
-    b.mesh.position.y = Math.max(1.2, b.mesh.position.y - 0.12);
-    b.life--;
-    if (b.life <= 0) {
-      scene.remove(b.mesh);
-      spearBolts.splice(i, 1);
-    }
-  }
-
-  // Update Enemies, Ragdoll Physics & Combat Collisions
-  const isStrikingNow = state.slashProgress >= 0.22 && state.slashProgress <= 0.78;
-  const strikeReachZ = state.mode === 'ST_GEORGE' ? 9.5 : 6.8;
-
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    const e = enemies[i];
-
-    // If enemy was struck, tumble with Ragdoll Physics!
-    if (e.userData.ragdoll) {
-      e.position.x += e.userData.vx;
-      e.position.y += e.userData.vy;
-      e.position.z += e.userData.vz;
-      e.userData.vy -= 0.028;
-      e.rotation.x += e.userData.rx;
-      e.rotation.z += e.userData.rz;
-      if (e.position.y < -5 || e.position.z > 20) {
-        scene.remove(e);
-        enemies.splice(i, 1);
-      }
-      continue;
-    }
-
-    e.position.z += state.speed * e.userData.speedMult;
-
-    if (e.userData.isCavalry) {
-      animateHorseGallop(e.userData.horse, state.cycle * 1.15 + i);
-      e.userData.saberArm.rotation.x = -0.7 + Math.sin(state.cycle * 1.5) * 0.25;
-    } else {
-      e.userData.infantryLegs[0].rotation.x = Math.sin(state.cycle * 1.4 + i) * 0.65;
-      e.userData.infantryLegs[1].rotation.x = -Math.sin(state.cycle * 1.4 + i) * 0.65;
-    }
-
-    const dx = Math.abs(e.position.x - playerRoot.position.x);
-    const dz = Math.abs(e.position.z - playerRoot.position.z);
-
-    // Check Spear Bolt Hit
-    let boltHit = false;
-    for (let j = spearBolts.length - 1; j >= 0; j--) {
-      if (Math.abs(spearBolts[j].mesh.position.x - e.position.x) < 2.8 &&
-          Math.abs(spearBolts[j].mesh.position.z - e.position.z) < 4.0) {
-        boltHit = true;
-        break;
-      }
-    }
-
-    const meleeHit = isStrikingNow && dx < 2.6 && e.position.z < 1.8 && e.position.z > -strikeReachZ;
-    const georgeAuraHit = state.mode === 'ST_GEORGE' && dx < 2.3 && dz < 3.6;
-
-    if (boltHit || meleeHit || georgeAuraHit) {
-      // Launch Enemy into Violent Ragdoll Tumble!
-      e.userData.ragdoll = true;
-      e.userData.vx = (e.position.x >= playerRoot.position.x ? 1 : -1) * (0.28 + Math.random() * 0.25);
-      e.userData.vy = 0.38 + Math.random() * 0.2;
-      e.userData.vz = -0.35;
-      e.userData.rx = (Math.random() - 0.5) * 0.28;
-      e.userData.rz = (Math.random() - 0.5) * 0.28;
-
-      spawnSparks(e.position.x, 2.4, e.position.z, state.mode === 'ST_GEORGE' ? 0xffe066 : 0xff4d1a, 24);
-      state.kills++;
-      state.score += 300;
-      state.shake = 0.42;
-      document.getElementById('kill-counter').textContent = `Vanquished: ${state.kills}`;
-
-      if (state.mode !== 'ST_GEORGE') {
-        state.strikeCharge++;
-        document.getElementById('stgeorge-fill').style.width = `${(state.strikeCharge / 5) * 100}%`;
-        if (state.strikeCharge >= 5) {
-          activateSaintGeorge();
-        }
-      }
-      continue;
-    }
-
-    // Enemy Hits Player
-    if (dx < 1.65 && dz < 2.1 && playerRoot.position.y < 1.8 && state.invincible <= 0) {
-      state.hp -= 22;
-      state.invincible = 42;
-      state.shake = 0.72;
-      spawnSparks(playerRoot.position.x, 2.5, playerRoot.position.z, 0xd90429, 18);
-      document.getElementById('hp-fill').style.width = `${Math.max(0, state.hp)}%`;
-
-      if (state.hp <= 0) {
-        triggerGameOver();
-        return;
-      }
-    }
-
-    if (e.position.z > 18) {
-      scene.remove(e);
-      enemies.splice(i, 1);
-    }
-  }
-
-  // Update Sparks
-  for (let i = sparkParticles.length - 1; i >= 0; i--) {
-    const p = sparkParticles[i];
-    p.mesh.position.x += p.vx;
-    p.mesh.position.y += p.vy;
-    p.mesh.position.z += p.vz;
-    p.vy -= 0.018;
-    p.life--;
-    if (p.life <= 0) {
-      scene.remove(p.mesh);
-      sparkParticles.splice(i, 1);
-    }
-  }
-
-  // Dynamic Over-The-Shoulder Third-Person Camera (Matching Image 4 Framing)
-  if (state.shake > 0.01) state.shake *= 0.84;
-  else state.shake = 0;
-
-  const camTargetX = playerRoot.position.x * 0.62 + 0.45 + (Math.random() - 0.5) * state.shake;
-  const camTargetY = 4.85 + playerRoot.position.y * 0.35 + (Math.random() - 0.5) * state.shake;
-  camera.position.x += (camTargetX - camera.position.x) * 0.12;
-  camera.position.y += (camTargetY - camera.position.y) * 0.12;
-  camera.position.z = 8.4;
-  camera.lookAt(playerRoot.position.x * 0.4, 2.8, -14);
-
-  // Foreground Companion Horse Head & Ears locked to bottom center of camera view
-  fgHorseHead.position.set(
-    camera.position.x - 0.1,
-    camera.position.y - 2.05 + Math.sin(state.cycle * 1.15) * 0.08,
-    camera.position.z - 2.6
-  );
-
-  renderer.render(scene, camera);
-}
-
-function triggerGameOver() {
-  state.gameOver = true;
-  document.getElementById('final-summary').textContent =
-    `Adwa Glory Score: ${state.score.toLocaleString()} | Enemy Forces Vanquished: ${state.kills}`;
-  document.getElementById('gameover-modal').style.display = 'flex';
-}
-
-document.getElementById('restart-btn').addEventListener('click', () => {
-  enemies.forEach(e => scene.remove(e));
-  enemies.length = 0;
-  spearBolts.forEach(b => scene.remove(b.mesh));
-  spearBolts.length = 0;
-
-  state.hp = 100;
-  state.score = 0;
-  state.kills = 0;
-  state.strikeCharge = 0;
-  state.mode = 'MOUNTED';
-  state.gameOver = false;
-  currentLane = 1;
-  stGeorgePhantom.visible = false;
-  stGeorgeLight.intensity = 0;
-
-  document.getElementById('hp-fill').style.width = '100%';
-  document.getElementById('stgeorge-fill').style.width = '0%';
-  document.getElementById('kill-counter').textContent = 'Vanquished: 0';
-  document.getElementById('gameover-modal').style.display = 'none';
-  syncModeHUD();
-});
-
-animate();
-</script>
-</body>
-</html>
+      d.sprite.position.x = (Math.random() - 0.5) * 
