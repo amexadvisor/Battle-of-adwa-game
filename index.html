@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ADWA 1896: Menelik & The Wrath of Saint George</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #0d0704;
+    font-family: 'Cinzel', 'Georgia', serif;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* Cinematic HUD */
+  #hud {
+    position: fixed;
+    top: 16px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .hud-panel {
+    background: linear-gradient(135deg, rgba(20, 12, 6, 0.85), rgba(45, 26, 12, 0.65));
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), inset 0 0 12px rgba(212, 175, 55, 0.15);
+    backdrop-filter: blur(8px);
+    padding: 10px 18px;
+    border-radius: 10px;
+    color: #f7e6c4;
+  }
+  .hud-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #d4af37;
+    margin-bottom: 4px;
+    font-weight: bold;
+  }
+  .bar-container {
+    width: 180px;
+    height: 10px;
+    background: rgba(0,0,0,0.7);
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.15);
+    margin-bottom: 6px;
+  }
+  #health-fill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #8b0000, #e63946, #ff6b6b);
+    transition: width 0.2s ease;
+  }
+  #george-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #b8860b, #ffd700, #fffacd);
+    box-shadow: 0 0 10px #ffd700;
+    transition: width 0.2s ease;
+  }
+  .score-box {
+    text-align: right;
+  }
+  #score-val {
+    font-size: 28px;
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+  }
+  #mode-badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    border-radius: 4px;
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px solid #d4af37;
+    color: #ffd700;
+    text-transform: uppercase;
+  }
+
+  /* Full-Screen Shadow / Divine Banner */
+  #banner-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.85) 100%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    z-index: 20;
+  }
+  #banner-overlay.active {
+    opacity: 1;
+  }
+  #banner-main {
+    font-size: clamp(26px, 5vw, 54px);
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #ffd700;
+    text-shadow: 0 0 25px rgba(255, 215, 0, 0.9), 0 4px 15px #000;
+    text-align: center;
+    padding: 0 20px;
+    transform: scale(0.9);
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  #banner-overlay.active #banner-main {
+    transform: scale(1);
+  }
+  #banner-sub {
+    font-size: clamp(13px, 2.2vw, 20px);
+    color: #f4e8c1;
+    letter-spacing: 3px;
+    margin-top: 8px;
+    text-shadow: 0 2px 8px #000;
+    text-transform: uppercase;
+  }
+
+  /* Touch Controls */
+  #controls {
+    position: fixed;
+    bottom: 22px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 15;
+    pointer-events: none;
+  }
+  .btn-group {
+    display: flex;
+    gap: 14px;
+    pointer-events: auto;
+  }
+  .ctrl-btn {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(60, 38, 18, 0.85), rgba(18, 10, 4, 0.92));
+    border: 2px solid rgba(212, 175, 55, 0.65);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(212, 175, 55, 0.25);
+    color: #ffd700;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 11px;
+    letter-spacing: 1px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.08s ease, border-color 0.15s;
+  }
+  .ctrl-btn:active {
+    transform: scale(0.92);
+    border-color: #fff;
+    background: radial-gradient(circle at 30% 30%, rgba(110, 75, 30, 0.9), rgba(35, 20, 8, 0.95));
+  }
+  .ctrl-btn span.icon {
+    font-size: 22px;
+    margin-bottom: 2px;
+  }
+  .attack-btn {
+    width: 90px;
+    height: 90px;
+    border-color: rgba(255, 90, 54, 0.8);
+    background: radial-gradient(circle at 30% 30%, rgba(120, 25, 15, 0.88), rgba(35, 6, 4, 0.95));
+  }
+
+  /* Game Over Modal */
+  #game-over {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 4, 2, 0.88);
+    backdrop-filter: blur(10px);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+  }
+  #game-over h1 {
+    font-size: clamp(32px, 6vw, 56px);
+    color: #d4af37;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    text-shadow: 0 4px 20px rgba(212, 175, 55, 0.6);
+  }
+  #game-over p {
+    font-size: 18px;
+    color: #e0cda9;
+    margin-bottom: 24px;
+  }
+  #restart-btn {
+    padding: 14px 34px;
+    font-size: 16px;
+    font-family: inherit;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #1a0f05;
+    background: linear-gradient(135deg, #ffd700, #c59b27);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.4);
+  }
+</style>
+</head>
+<body>
+
+<!-- Cinematic HUD -->
+<div id="hud">
+  <div class="hud-panel">
+    <div class="hud-title">Vitality (Menelik II)</div>
+    <div class="bar-container"><div id="health-fill"></div></div>
+    <div class="hud-title">Saint George Strike (5 Kills)</div>
+    <div class="bar-container"><div id="george-fill"></div></div>
+    <div id="mode-badge">State: Royal Cavalry</div>
+  </div>
+
+  <div class="hud-panel score-box">
+    <div class="hud-title">Adwa Glory</div>
+    <div id="score-val">0</div>
+    <div id="streak-text" style="font-size:12px; color:#e6c875; margin-top:2px;">Streak: 0x</div>
+  </div>
+</div>
+
+<!-- Full-screen shadow notification -->
+<div id="banner-overlay">
+  <div id="banner-main">SAINT GEORGE AWAKENED</div>
+  <div id="banner-sub">Patron of Ethiopia Rides at Adwa</div>
+</div>
+
+<!-- Touch Controls -->
+<div id="controls">
+  <div class="btn-group">
+    <button class="ctrl-btn" id="btn-down">
+      <span class="icon">⬇</span>
+      <span id="label-down">DISMOUNT</span>
+    </button>
+  </div>
+  <div class="btn-group">
+    <button class="ctrl-btn" id="btn-up">
+      <span class="icon">⬆</span>
+      <span id="label-up">JUMP</span>
+    </button>
+    <button class="ctrl-btn attack-btn" id="btn-atk">
+      <span class="icon">⚔</span>
+      <span>STRIKE</span>
+    </button>
+  </div>
+</div>
+
+<!-- Game Over Screen -->
+<div id="game-over">
+  <h1>THE BATTLE CONTINUES</h1>
+  <p id="final-stats">You defended the mountains of Adwa with valor.</p>
+  <button id="restart-btn">RIDE AGAIN</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let W = canvas.width = window.innerWidth;
+let H = canvas.height = window.innerHeight;
+window.addEventListener('resize', () => {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  groundY = H * 0.78;
+});
+
+let groundY = H * 0.78;
+
+// Game State
+let gameSpeed = 8.5;
+let score = 0;
+let kills = 0;
+let streak = 0;
+let stGeorgeCharge = 0; // 0 to 5
+let isGameOver = false;
+let frameCount = 0;
+let screenShake = 0;
+let lightningFlash = 0;
+
+// Hero States: 'MOUNTED', 'ON_FOOT', 'ST_GEORGE'
+const hero = {
+  x: 150,
+  y: groundY,
+  vy: 0,
+  gravity: 0.78,
+  state: 'MOUNTED', // MOUNTED, ON_FOOT, ST_GEORGE
+  stGeorgeTimer: 0,
+  maxStGeorgeTime: 520, // ~8.5 seconds of divine power
+  health: 100,
+  maxHealth: 100,
+  isJumping: false,
+  isRolling: false,
+  rollTimer: 0,
+  attackTimer: 0,
+  invincibleTimer: 0,
+  runCycle: 0
+};
+
+// Companion Horse when hero jumps to the ground
+const steed = {
+  x: -200,
+  y: groundY,
+  active: false,
+  returning: false,
+  gallopCycle: 0
+};
+
+// Environment & Entities
+const mountains = [];
+const dustParticles = [];
+const embers = [];
+const bloodParticles = [];
+const enemies = [];
+const projectiles = [];
+
+// Initialize Parallax Mountains of Adwa (Soloda Mountains)
+for (let layer = 0; layer < 3; layer++) {
+  const pts = [];
+  let cx = 0;
+  while (cx < W * 3) {
+    pts.push({
+      x: cx,
+      h: (120 + Math.random() * 160) * (1 - layer * 0.22)
+    });
+    cx += 140 + Math.random() * 120;
+  }
+  mountains.push({ layer, pts, speed: (layer + 1) * 0.45 });
+}
+
+// Banner Notification Helper
+let bannerTimeout = null;
+function showBanner(mainText, subText, duration = 1800) {
+  const overlay = document.getElementById('banner-overlay');
+  document.getElementById('banner-main').textContent = mainText;
+  document.getElementById('banner-sub').textContent = subText;
+  overlay.classList.add('active');
+  if (bannerTimeout) clearTimeout(bannerTimeout);
+  bannerTimeout = setTimeout(() => {
+    overlay.classList.remove('active');
+  }, duration);
+}
+
+// Particle Spawners
+function spawnDust(x, y, count = 4, color = 'rgba(185, 142, 92, 0.55)') {
+  for (let i = 0; i < count; i++) {
+    dustParticles.push({
+      x: x + (Math.random() - 0.5) * 20,
+      y: y - Math.random() * 8,
+      vx: -gameSpeed * (0.4 + Math.random() * 0.5),
+      vy: -Math.random() * 2.5 - 0.5,
+      size: 4 + Math.random() * 10,
+      alpha: 0.7,
+      color
+    });
+  }
+}
+
+function spawnHitSparks(x, y, color = '#ff3b1f', count = 14) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = 2 + Math.random() * 9;
+    bloodParticles.push({
+      x, y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd - 2,
+      size: 2.5 + Math.random() * 4,
+      life: 1,
+      color
+    });
+  }
+}
+
+// Controls Logic
+function actionUp() {
+  if (isGameOver) return;
+
+  // If on foot and horse is close enough, Jump & Remount!
+  if (hero.state === 'ON_FOOT' && !hero.isJumping) {
+    hero.vy = -15.5;
+    hero.isJumping = true;
+    // Call steed to remount mid-air
+    steed.active = true;
+    steed.returning = true;
+    steed.x = hero.x - 160;
+    spawnDust(hero.x, groundY, 10);
+    return;
+  }
+
+  if (!hero.isJumping) {
+    hero.vy = hero.state === 'ST_GEORGE' ? -17.5 : -16;
+    hero.isJumping = true;
+    spawnDust(hero.x, groundY, 12);
+  }
+}
+
+function actionDown() {
+  if (isGameOver) return;
+
+  // Dismount from horse to fight on foot!
+  if (hero.state === 'MOUNTED') {
+    hero.state = 'ON_FOOT';
+    hero.vy = -8;
+    hero.isJumping = true;
+    steed.active = true;
+    steed.returning = false;
+    steed.x = hero.x;
+    steed.y = groundY;
+    screenShake = 6;
+    spawnDust(hero.x, groundY, 15);
+    updateHUDLabels();
+    showBanner("INFANTRY COMBAT", "Fighting on the Earth of Adwa", 1100);
+  } else if (hero.state === 'ON_FOOT' && !hero.isJumping) {
+    // Tactical combat roll on foot
+    hero.isRolling = true;
+    hero.rollTimer = 24;
+    spawnDust(hero.x, groundY, 8);
+  } else if (hero.isJumping) {
+    // Fast drop
+    hero.vy = 14;
+  }
+}
+
+function actionAttack() {
+  if (isGameOver) return;
+  if (hero.attackTimer <= 0) {
+    hero.attackTimer = hero.state === 'ST_GEORGE' ? 14 : 18;
+
+    // If Saint George, also launch a golden holy lance shockwave
+    if (hero.state === 'ST_GEORGE') {
+      projectiles.push({
+        x: hero.x + 60,
+        y: hero.y - 65,
+        vx: 19,
+        size: 40,
+        life: 60
+      });
+    }
+  }
+}
+
+function triggerStGeorgeTransformation() {
+  hero.state = 'ST_GEORGE';
+  hero.stGeorgeTimer = hero.maxStGeorgeTime;
+  hero.invincibleTimer = 60;
+  steed.active = false;
+  lightningFlash = 1.0;
+  screenShake = 20;
+  spawnHitSparks(hero.x, hero.y - 50, '#ffd700', 40);
+  showBanner("SAINT GEORGE AWAKENED", "Qidus Giorgis Fights for Ethiopia!", 2200);
+  updateHUDLabels();
+}
+
+function updateHUDLabels() {
+  const badge = document.getElementById('mode-badge');
+  const lblDown = document.getElementById('label-down');
+  const lblUp = document.getElementById('label-up');
+
+  if (hero.state === 'MOUNTED') {
+    badge.textContent = 'State: Royal Cavalry (Menelik II)';
+    badge.style.color = '#ffd700';
+    lblDown.textContent = 'DISMOUNT';
+    lblUp.textContent = 'JUMP';
+  } else if (hero.state === 'ON_FOOT') {
+    badge.textContent = 'State: Ground Warrior (On Foot)';
+    badge.style.color = '#ff9f43';
+    lblDown.textContent = 'ROLL';
+    lblUp.textContent = 'REMOUNT';
+  } else if (hero.state === 'ST_GEORGE') {
+    badge.textContent = 'State: SAINT GEORGE (DIVINE)';
+    badge.style.color = '#fffacd';
+    lblDown.textContent = 'DESCEND';
+    lblUp.textContent = 'SKY LEAP';
+  }
+}
+
+// Input Listeners
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') actionUp();
+  if (e.code === 'ArrowDown' || e.code === 'KeyS') actionDown();
+  if (e.code === 'KeyF' || e.code === 'Enter' || e.code === 'ArrowRight') actionAttack();
+});
+
+document.getElementById('btn-up').addEventListener('pointerdown', (e) => { e.preventDefault(); actionUp(); });
+document.getElementById('btn-down').addEventListener('pointerdown', (e) => { e.preventDefault(); actionDown(); });
+document.getElementById('btn-atk').addEventListener('pointerdown', (e) => { e.preventDefault(); actionAttack(); });
+document.getElementById('restart-btn').addEventListener('click', resetGame);
+
+// Enemy Spawner
+function spawnEnemy() {
+  const types = ['CAVALRY', 'INFANTRY', 'CANNON_BARRICADE'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  enemies.push({
+    type,
+    x: W + 120,
+    y: groundY,
+    vx: type === 'CAVALRY' ? -(gameSpeed * 1.35) : (type === 'INFANTRY' ? -(gameSpeed * 1.1) : -gameSpeed),
+    width: type === 'CANNON_BARRICADE' ? 75 : 65,
+    height: type === 'CAVALRY' ? 110 : (type === 'INFANTRY' ? 75 : 55),
+    dead: false,
+    runCycle: Math.random() * 10
+  });
+}
+
+// Realistic Articulated Horse & Rider Renderer
+function drawArticulatedHorseAndRider(x, y, cycle, mode, atkTimer, isRolling) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Ground Shadow
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+  ctx.beginPath();
+  ctx.ellipse(0, 4, mode === 'ON_FOOT' ? 28 : 58, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const isGeorge = mode === 'ST_GEORGE';
+
+  // Divine Halo & Aura if Saint George
+  if (isGeorge) {
+    const grad = ctx.createRadialGradient(0, -65, 10, 0, -65, 110);
+    grad.addColorStop(0, 'rgba(255, 235, 120, 0.55)');
+    grad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(0, -65, 110, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // --- IF FIGHTING ON FOOT ---
+  if (mode === 'ON_FOOT') {
+    if (isRolling) {
+      ctx.rotate(frameCount * 0.45);
+      ctx.translate(0, -25);
+    }
+    const legSwing = Math.sin(cycle * 1.4) * 18;
+    const bob = Math.abs(Math.cos(cycle * 1.4)) * 5;
+    ctx.translate(0, -bob);
+
+    // Back Leg
+    ctx.strokeStyle = '#d8cbb8'; // Traditional white/cream Kemis trousers
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-4, -34);
+    ctx.lineTo(-4 - legSwing * 0.6, -16);
+    ctx.lineTo(-8 - legSwing, 0);
+    ctx.stroke();
+
+    // Front Leg
+    ctx.strokeStyle = '#f5ebd6';
+    ctx.beginPath();
+    ctx.moveTo(4, -34);
+    ctx.lineTo(4 + legSwing * 0.7, -16);
+    ctx.lineTo(6 + legSwing, 0);
+    ctx.stroke();
+
+    // Flowing Black & Gold Kabba (Royal Cloak)
+    ctx.fillStyle = '#1c1613';
+    ctx.beginPath();
+    ctx.moveTo(-8, -68);
+    ctx.quadraticCurveTo(-38, -55 + Math.sin(cycle) * 8, -48, -28);
+    ctx.lineTo(-10, -32);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Torso (White traditional tunic + golden trim)
+    ctx.fillStyle = '#f4eedf';
+    ctx.fillRect(-10, -68, 20, 35);
+
+    // Head & Menelik Ras Haile / Royal Headband
+    ctx.fillStyle = '#5c3822';
+    ctx.beginPath();
+    ctx.arc(2, -78, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // White Ras Band / Imperial Crown Trim
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-8, -85, 19, 5);
+    ctx.fillStyle = '#d4af37';
+    ctx.fillRect(-8, -82, 19, 2);
+
+    // Ethiopian Tewahdo Shield (Gasha) with gold embossing
+    ctx.fillStyle = '#3b1e0e';
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(-6, -50, 12, 18, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Sword Arm & Curved Shotel Blade
+    ctx.save();
+    ctx.translate(8, -60);
+    const slashAngle = atkTimer > 0 ? Math.sin((18 - atkTimer) * 0.35) * 2.1 - 0.8 : -0.3;
+    ctx.rotate(slashAngle);
+    ctx.strokeStyle = '#f4eedf';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(16, 4);
+    ctx.stroke();
+
+    // Curved Shotel Sword
+    ctx.strokeStyle = '#e8f1f5';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(16, 4);
+    ctx.quadraticCurveTo(38, -6, 48, 14);
+    ctx.stroke();
+
+    if (atkTimer > 0) {
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
+      ctx.lineWidth = 8;
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.restore();
+    return;
+  }
+
+  // --- MOUNTED CAVALRY (MENELIK II OR SAINT GEORGE) ---
+  const horseBounce = Math.sin(cycle) * 5;
+  ctx.translate(0, horseBounce);
+
+  const coatDark = isGeorge ? '#cfd8dc' : '#3d2210';
+  const coatMain = isGeorge ? '#ffffff' : '#593118';
+  const coatHighlight = isGeorge ? '#fffde7' : '#7a4626';
+
+  // 4 Articulated Horse Legs (2 Back, 2 Front with knees & hooves)
+  const phases = [0, 0.8, 3.1, 3.9];
+  for (let i = 0; i < 4; i++) {
+    const isBack = i < 2;
+    const isFar = i % 2 === 0;
+    const p = cycle + phases[i];
+    const hipX = isBack ? -28 : 26;
+    const hipY = -44;
+
+    const thighAngle = Math.sin(p) * 0.55;
+    const kneeX = hipX + Math.sin(thighAngle) * 22;
+    const kneeY = hipY + Math.cos(thighAngle) * 22;
+
+    const shinAngle = thighAngle + (Math.cos(p) > 0 ? 0.45 : -0.15);
+    const hoofX = kneeX + Math.sin(shinAngle) * 22;
+    const hoofY = Math.min(0, kneeY + Math.cos(shinAngle) * 22);
+
+    ctx.strokeStyle = isFar ? coatDark : coatMain;
+    ctx.lineWidth = isFar ? 6.5 : 8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(hipX, hipY);
+    ctx.lineTo(kneeX, kneeY);
+    ctx.lineTo(hoofX, hoofY);
+    ctx.stroke();
+
+    // Golden/Iron Hoof
+    ctx.fillStyle = isGeorge ? '#ffd700' : '#1a1a1a';
+    ctx.fillRect(hoofX - 3, hoofY - 3, 7, 4);
+  }
+
+  // Flowing Horse Tail
+  ctx.strokeStyle = isGeorge ? '#fff8e1' : '#1a0f08';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(-42, -56);
+  ctx.quadraticCurveTo(-68, -48 + Math.sin(cycle * 2) * 10, -82, -30);
+  ctx.stroke();
+
+  // Muscular Horse Barrel / Body
+  const bodyGrad = ctx.createLinearGradient(-40, -70, 35, -35);
+  bodyGrad.addColorStop(0, coatHighlight);
+  bodyGrad.addColorStop(1, coatMain);
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.ellipse(-2, -52, 44, 20, -0.05, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Royal Ethiopian Saddle Blanket (Green, Yellow, Red & Gold Embroidery)
+  ctx.fillStyle = isGeorge ? '#b71c1c' : '#1b5e20';
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.roundRect(-22, -71, 36, 22, 4);
+  ctx.fill();
+  ctx.stroke();
+
+  // Horse Neck & Head
+  ctx.fillStyle = coatMain;
+  ctx.beginPath();
+  ctx.moveTo(22, -60);
+  ctx.lineTo(44, -96);
+  ctx.lineTo(64, -86);
+  ctx.lineTo(58, -74);
+  ctx.lineTo(42, -78);
+  ctx.lineTo(35, -42);
+  ctx.closePath();
+  ctx.fill();
+
+  // Horse Mane
+  ctx.strokeStyle = isGeorge ? '#ffd700' : '#1a0d05';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(22, -62);
+  ctx.quadraticCurveTo(30, -82, 44, -96);
+  ctx.stroke();
+
+  // Golden Bridle & Reins
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(44, -95);
+  ctx.lineTo(59, -78);
+  ctx.lineTo(8, -76);
+  ctx.stroke();
+
+  // --- RIDER (MENELIK II OR SAINT GEORGE) ---
+  // Flowing Cloak (Red & Gold for St. George, Royal Black/Gold Kabba for Menelik)
+  ctx.fillStyle = isGeorge ? '#c62828' : '#17120e';
+  ctx.beginPath();
+  ctx.moveTo(-8, -104);
+  ctx.quadraticCurveTo(-48, -92 + Math.sin(cycle) * 12, -64, -66);
+  ctx.lineTo(-12, -70);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Rider Torso
+  ctx.fillStyle = isGeorge ? '#ffd700' : '#f5efe2';
+  ctx.fillRect(-10, -104, 20, 34);
+
+  // Rider Head
+  ctx.fillStyle = '#613b23';
+  ctx.beginPath();
+  ctx.arc(2, -115, 9.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (isGeorge) {
+    // Saint George Radiant Halo
+    ctx.strokeStyle = '#fff59d';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(2, -115, 16, 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    // Menelik II Iconic Imperial Crown / Ras Sebhat Scarf
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-7, -122, 18, 4);
+    ctx.fillStyle = '#d4af37';
+    ctx.beginPath();
+    ctx.moveTo(-6, -122);
+    ctx.lineTo(2, -131);
+    ctx.lineTo(10, -122);
+    ctx.fill();
+  }
+
+  // Weapon Arm (Holy Cross Lance for St. George, Curved Shotel for Menelik)
+  ctx.save();
+  ctx.translate(6, -94);
+  const swing = atkTimer > 0 ? Math.sin((18 - atkTimer) * 0.35) * 1.6 : 0.1;
+  ctx.rotate(swing);
+
+  if (isGeorge) {
+    // Long Golden Cross Spear (Lance of Saint George)
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.moveTo(-25, 6);
+    ctx.lineTo(78, -6);
+    ctx.stroke();
+
+    // Glowing Spearhead
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(78, -11);
+    ctx.lineTo(98, -6);
+    ctx.lineTo(78, -1);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    // Curved Ethiopian Shotel Sword
+    ctx.strokeStyle = '#e0f7fa';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(32, -18, 48, 8);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Traditional Shield on Shoulder
+  ctx.fillStyle = isGeorge ? '#d4af37' : '#3e2723';
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(-4, -86, 11, 16, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// Draw Unmounted Companion Horse (When Menelik leaps to the ground)
+function drawCompanionSteed(x, y, cycle) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.globalAlpha = 0.9;
+  const bounce = Math.sin(cycle) * 4;
+  ctx.translate(0, bounce);
+
+  ctx.fillStyle = '#4a2812';
+  ctx.beginPath();
+  ctx.ellipse(0, -50, 40, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head & Neck
+  ctx.beginPath();
+  ctx.moveTo(20, -55);
+  ctx.lineTo(40, -90);
+  ctx.lineTo(56, -80);
+  ctx.lineTo(32, -42);
+  ctx.fill();
+
+  // Simple galloping legs
+  ctx.strokeStyle = '#3b1e0d';
+  ctx.lineWidth = 6;
+  const s = Math.sin(cycle) * 18;
+  ctx.beginPath();
+  ctx.moveTo(-25, -40); ctx.lineTo(-25 - s, 0);
+  ctx.moveTo(22, -40); ctx.lineTo(22 + s, 0);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// Draw Enemies (Colonial Cavalry, Rifle Infantry, Field Artillery)
+function drawEnemy(e) {
+  ctx.save();
+  ctx.translate(e.x, e.y);
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 32, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (e.type === 'CAVALRY') {
+    const b = Math.sin(e.runCycle) * 4;
+    ctx.translate(0, b);
+    // Enemy Dark Bay Horse facing Left
+    ctx.fillStyle = '#2b1d16';
+    ctx.beginPath();
+    ctx.ellipse(0, -48, 38, 17, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Horse Neck facing Left
+    ctx.beginPath();
+    ctx.moveTo(-20, -55);
+    ctx.lineTo(-42, -86);
+    ctx.lineTo(-56, -75);
+    ctx.lineTo(-30, -40);
+    ctx.fill();
+
+    // Legs
+    const leg = Math.sin(e.runCycle) * 16;
+    ctx.strokeStyle = '#1c120d';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(-22, -38); ctx.lineTo(-22 - leg, 0);
+    ctx.moveTo(22, -38); ctx.lineTo(22 + leg, 0);
+    ctx.stroke();
+
+    // Colonial Rider (Khaki Tunic & Pith Helmet)
+    ctx.fillStyle = '#bcaaa4';
+    ctx.fillRect(-8, -94, 16, 30);
+    ctx.fillStyle = '#d7ccc8';
+    ctx.beginPath();
+    ctx.arc(0, -104, 9, Math.PI, 0);
+    ctx.fill();
+
+    // Enemy Saber pointing left
+    ctx.strokeStyle = '#cfd8dc';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-8, -80);
+    ctx.lineTo(-48, -74);
+    ctx.stroke();
+
+  } else if (e.type === 'INFANTRY') {
+    const s = Math.sin(e.runCycle * 1.3) * 14;
+    ctx.strokeStyle = '#8d6e63';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(-3, -30); ctx.lineTo(-3 - s, 0);
+    ctx.moveTo(3, -30); ctx.lineTo(3 + s, 0);
+    ctx.stroke();
+
+    // Soldier Uniform
+    ctx.fillStyle = '#a1887f';
+    ctx.fillRect(-9, -62, 18, 32);
+
+    // Helmet
+    ctx.fillStyle = '#eceff1';
+    ctx.beginPath();
+    ctx.arc(0, -70, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bayonet Rifle pointing left
+    ctx.strokeStyle = '#cfd8dc';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(4, -48);
+    ctx.lineTo(-42, -52);
+    ctx.stroke();
+
+  } else if (e.type === 'CANNON_BARRICADE') {
+    // Artillery Cannon & Wooden Spikes
+    ctx.fillStyle = '#4e342e';
+    ctx.fillRect(-25, -28, 50, 14);
+    // Cannon Barrel
+    ctx.fillStyle = '#37474f';
+    ctx.beginPath();
+    ctx.moveTo(20, -38);
+    ctx.lineTo(-38, -48);
+    ctx.lineTo(-38, -34);
+    ctx.lineTo(20, -24);
+    ctx.fill();
+    // Cannon Wheel
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, -20, 18, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Main Update Loop
+function update() {
+  if (isGameOver) return;
+  frameCount++;
+  gameSpeed = Math.min(16, 8.5 + score * 0.015);
+
+  // Hero physics
+  hero.runCycle += 0.24 * (gameSpeed / 8.5);
+  hero.y += hero.vy;
+
+  if (hero.y < groundY) {
+    hero.vy += hero.gravity;
+  } else {
+    hero.y = groundY;
+    hero.vy = 0;
+    if (hero.isJumping) {
+      hero.isJumping = false;
+      // Check if remounting steed
+      if (hero.state === 'ON_FOOT' && steed.returning) {
+        hero.state = 'MOUNTED';
+        steed.active = false;
+        steed.returning = false;
+        updateHUDLabels();
+        showBanner("ROYAL CAVALRY", "Menelik II Remounted", 1000);
+      }
+      spawnDust(hero.x, groundY, 6);
+    }
+  }
+
+  // Running dust
+  if (!hero.isJumping && frameCount % 4 === 0) {
+    const col = hero.state === 'ST_GEORGE' ? 'rgba(255, 235, 130, 0.65)' : 'rgba(175, 128, 78, 0.5)';
+    spawnDust(hero.x - 20, groundY, 2, col);
+  }
+
+  // Timers
+  if (hero.attackTimer > 0) hero.attackTimer--;
+  if (hero.invincibleTimer > 0) hero.invincibleTimer--;
+  if (hero.rollTimer > 0) {
+    hero.rollTimer--;
+    if (hero.rollTimer === 0) hero.isRolling = false;
+  }
+
+  // Saint George Transformation Timer
+  if (hero.state === 'ST_GEORGE') {
+    hero.stGeorgeTimer--;
+    document.getElementById('george-fill').style.width = `${(hero.stGeorgeTimer / hero.maxStGeorgeTime) * 100}%`;
+    if (hero.stGeorgeTimer <= 0) {
+      hero.state = 'MOUNTED';
+      stGeorgeCharge = 0;
+      document.getElementById('george-fill').style.width = '0%';
+      updateHUDLabels();
+    }
+  }
+
+  // Companion Steed Logic
+  if (steed.active) {
+    steed.gallopCycle += 0.25;
+    if (steed.returning) {
+      steed.x += (hero.x - steed.x) * 0.18;
+    } else {
+      steed.x -= 3.5;
+      if (steed.x < -180) steed.active = false;
+    }
+  }
+
+  // Spawn Enemies
+  if (frameCount % Math.max(45, Math.floor(105 - gameSpeed * 3)) === 0) {
+    spawnEnemy();
+  }
+
+  // Projectiles (Saint George Holy Lance Waves)
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const p = projectiles[i];
+    p.x += p.vx;
+    p.life--;
+    if (p.life <= 0 || p.x > W + 100) projectiles.splice(i, 1);
+  }
+
+  // Update Enemies & Combat Collisions
+  const attackReach = hero.state === 'ST_GEORGE' ? 145 : (hero.state === 'MOUNTED' ? 105 : 85);
+
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+    e.x += e.vx;
+    e.runCycle += 0.22;
+
+    // Check Saint George Projectile Hit
+    for (let j = projectiles.length - 1; j >= 0; j--) {
+      const p = projectiles[j];
+      if (Math.abs(p.x - e.x) < 55) {
+        e.dead = true;
+        spawnHitSparks(e.x, e.y - 45, '#ffd700', 22);
+        score += 5;
+        break;
+      }
+    }
+
+    const distX = e.x - hero.x;
+    const distY = Math.abs(e.y - hero.y);
+
+    // Player Melee Attack Hit
+    if (!e.dead && hero.attackTimer > 0 && distX > -20 && distX < attackReach && distY < 85) {
+      if (e.type === 'CANNON_BARRICADE' && hero.state !== 'ST_GEORGE') {
+        // Cannon requires jumping unless you are Saint George
+      } else {
+        e.dead = true;
+        kills++;
+        streak++;
+        score += hero.state === 'ST_GEORGE' ? 5 : 3;
+        screenShake = 8;
+        spawnHitSparks(e.x, e.y - 50, hero.state === 'ST_GEORGE' ? '#ffd700' : '#ff2a1f', 18);
+
+        // Charge Saint George Meter
+        if (hero.state !== 'ST_GEORGE') {
+          stGeorgeCharge++;
+          document.getElementById('george-fill').style.width = `${(stGeorgeCharge / 5) * 100}%`;
+          if (stGeorgeCharge >= 5) {
+            triggerStGeorgeTransformation();
+          }
+        }
+        updateScoreHUD();
+      }
+    }
+
+    // Enemy Collision with Hero
+    if (!e.dead && Math.abs(distX) < 42 && distY < e.height - 12) {
+      if (hero.state === 'ST_GEORGE') {
+        // Saint George tramples enemies automatically!
+        e.dead = true;
+        score += 4;
+        screenShake = 10;
+        spawnHitSparks(e.x, e.y - 40, '#ffd700', 20);
+        updateScoreHUD();
+      } else if (hero.invincibleTimer <= 0 && !hero.isRolling) {
+        hero.health -= 22;
+        hero.invincibleTimer = 45;
+        streak = 0;
+        screenShake = 14;
+        spawnHitSparks(hero.x, hero.y - 50, '#d90429', 16);
+        document.getElementById('health-fill').style.width = `${Math.max(0, hero.health)}%`;
+        updateScoreHUD();
+
+        if (hero.health <= 0) {
+          endGame();
+        }
+      }
+    }
+
+    if (e.dead || e.x < -150) {
+      if (!e.dead && e.x < -150) {
+        score += 1;
+        updateScoreHUD();
+      }
+      enemies.splice(i, 1);
+    }
+  }
+
+  // Update Dust & Blood Particles
+  for (let i = dustParticles.length - 1; i >= 0; i--) {
+    const p = dustParticles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.size *= 0.96;
+    p.alpha -= 0.025;
+    if (p.alpha <= 0) dustParticles.splice(i, 1);
+  }
+
+  for (let i = bloodParticles.length - 1; i >= 0; i--) {
+    const p = bloodParticles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.38;
+    p.life -= 0.035;
+    if (p.life <= 0) bloodParticles.splice(i, 1);
+  }
+
+  if (screenShake > 0) screenShake *= 0.85;
+  if (lightningFlash > 0) lightningFlash -= 0.05;
+}
+
+function updateScoreHUD() {
+  document.getElementById('score-val').textContent = score;
+  document.getElementById('streak-text').textContent = `Streak: ${streak}x | Kills: ${kills}`;
+}
+
+// Render Loop (Atmospheric Sunset over Adwa Mountains)
+function draw() {
+  ctx.save();
+  if (screenShake > 0.5) {
+    ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+  }
+
+  // Golden-Hour Dramatic Adwa Sky Gradient
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
+  if (hero.state === 'ST_GEORGE') {
+    skyGrad.addColorStop(0, '#1a0f2e');
+    skyGrad.addColorStop(0.5, '#6b3fa0');
+    skyGrad.addColorStop(1, '#ffd54f');
+  } else {
+    skyGrad.addColorStop(0, '#140804');
+    skyGrad.addColorStop(0.45, '#591c0b');
+    skyGrad.addColorStop(0.8, '#b84a14');
+    skyGrad.addColorStop(1, '#f29f38');
+  }
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Glowing Sun & Volumetric God Rays over Soloda Peaks
+  const sunX = W * 0.72;
+  const sunY = groundY - 150;
+  const sunGrad = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, 220);
+  sunGrad.addColorStop(0, 'rgba(255, 250, 210, 0.95)');
+  sunGrad.addColorStop(0.3, 'rgba(255, 180, 60, 0.45)');
+  sunGrad.addColorStop(1, 'rgba(255, 100, 20, 0)');
+  ctx.fillStyle = sunGrad;
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, 220, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Parallax Adwa Mountains
+  const mColors = ['#261008', '#1c0b05', '#120603'];
+  mountains.forEach((m, idx) => {
+    ctx.fillStyle = mColors[idx];
+    ctx.beginPath();
+    ctx.moveTo(0, groundY);
+    for (let i = 0; i < m.pts.length; i++) {
+      const pt = m.pts[i];
+      pt.x -= m.speed * (gameSpeed / 8.5);
+      ctx.lineTo(pt.x, groundY - pt.h);
+    }
+    // Recycle mountain points seamlessly
+    if (m.pts[0].x < -260) {
+      const first = m.pts.shift();
+      first.x = m.pts[m.pts.length - 1].x + 160;
+      m.pts.push(first);
+    }
+    ctx.lineTo(W, groundY);
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  // Earth / Battlefield Ground
+  const earthGrad = ctx.createLinearGradient(0, groundY, 0, H);
+  earthGrad.addColorStop(0, '#3d2010');
+  earthGrad.addColorStop(0.25, '#241107');
+  earthGrad.addColorStop(1, '#0a0402');
+  ctx.fillStyle = earthGrad;
+  ctx.fillRect(0, groundY, W, H - groundY);
+
+  // Rim light on horizon
+  ctx.strokeStyle = 'rgba(255, 195, 85, 0.35)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  ctx.lineTo(W, groundY);
+  ctx.stroke();
+
+  // Draw Companion Steed if active
+  if (steed.active) {
+    drawCompanionSteed(steed.x, steed.y, steed.gallopCycle);
+  }
+
+  // Draw Enemies
+  enemies.forEach(drawEnemy);
+
+  // Draw Hero (Menelik II or Saint George)
+  drawArticulatedHorseAndRider(hero.x, hero.y, hero.runCycle, hero.state, hero.attackTimer, hero.isRolling);
+
+  // Draw Saint George Projectiles
+  projectiles.forEach(p => {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.strokeStyle = '#ffd700';
+    ctx.shadowColor = '#ffd700';
+    ctx.shadowBlur = 15;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, 26, -0.7, 0.7);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // Draw Dust & Sparks
+  dustParticles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  bloodParticles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  // Divine Lightning Flash Overlay
+  if (lightningFlash > 0) {
+    ctx.fillStyle = `rgba(255, 245, 190, ${lightningFlash})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  ctx.restore();
+}
+
+function endGame() {
+  isGameOver = true;
+  document.getElementById('final-stats').textContent = `Glory Score: ${score} | Enemies Vanquished: ${kills}`;
+  document.getElementById('game-over').style.display = 'flex';
+}
+
+function resetGame() {
+  isGameOver = false;
+  score = 0;
+  kills = 0;
+  streak = 0;
+  stGeorgeCharge = 0;
+  hero.health = 100;
+  hero.state = 'MOUNTED';
+  hero.y = groundY;
+  hero.vy = 0;
+  enemies.length = 0;
+  projectiles.length = 0;
+  document.getElementById('health-fill').style.width = '100%';
+  document.getElementById('george-fill').style.width = '0%';
+  document.getElementById('game-over').style.display = 'none';
+  updateHUDLabels();
+  updateScoreHUD();
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
