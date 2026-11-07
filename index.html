@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ADWA 1896: Menelik & The Wrath of Saint George</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ADWA 1896: 3D WebGL Tactical Cavalry</title>
 <style>
   * {
     margin: 0;
@@ -14,192 +14,243 @@
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
   }
-  body, html {
+  html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #0d0704;
-    font-family: 'Cinzel', 'Georgia', serif;
+    background: #120c08;
+    font-family: 'Georgia', serif;
   }
-  canvas {
-    display: block;
-    width: 100vw;
-    height: 100vh;
+  #webgl-container {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
   }
 
-  /* Cinematic HUD */
-  #hud {
+  /* Cinematic Post-Processing Vignette */
+  #vignette {
     position: fixed;
-    top: 16px;
-    left: 20px;
-    right: 20px;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at center, transparent 55%, rgba(10, 5, 2, 0.75) 100%);
+    z-index: 2;
+  }
+
+  /* Top HUD matching the concept art */
+  #hud-top {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    pointer-events: none;
     z-index: 10;
+    pointer-events: none;
   }
-  .hud-panel {
-    background: linear-gradient(135deg, rgba(20, 12, 6, 0.85), rgba(45, 26, 12, 0.65));
-    border: 1px solid rgba(212, 175, 55, 0.45);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), inset 0 0 12px rgba(212, 175, 55, 0.15);
-    backdrop-filter: blur(8px);
-    padding: 10px 18px;
-    border-radius: 10px;
-    color: #f7e6c4;
+
+  .bars-box {
+    background: linear-gradient(135deg, rgba(22, 15, 10, 0.88), rgba(42, 28, 16, 0.72));
+    border: 1.5px solid #c59b27;
+    border-radius: 8px;
+    padding: 8px 14px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.8);
+    min-width: 185px;
   }
-  .hud-title {
+  .bar-label {
     font-size: 11px;
-    letter-spacing: 2px;
+    color: #f3e5ab;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #d4af37;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     font-weight: bold;
   }
-  .bar-container {
-    width: 180px;
-    height: 10px;
-    background: rgba(0,0,0,0.7);
-    border-radius: 5px;
+  .bar-track {
+    width: 100%;
+    height: 9px;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    border-radius: 4px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.15);
     margin-bottom: 6px;
   }
-  #health-fill {
+  #hp-fill {
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, #8b0000, #e63946, #ff6b6b);
+    background: linear-gradient(90deg, #8b0000, #d90429, #ff4d6d);
     transition: width 0.2s ease;
   }
-  #george-fill {
+  #stgeorge-fill {
     width: 0%;
     height: 100%;
-    background: linear-gradient(90deg, #b8860b, #ffd700, #fffacd);
-    box-shadow: 0 0 10px #ffd700;
+    background: linear-gradient(90deg, #b8860b, #ffd700, #ffffff);
+    box-shadow: 0 0 12px #ffd700;
     transition: width 0.2s ease;
   }
-  .score-box {
-    text-align: right;
-  }
-  #score-val {
-    font-size: 28px;
-    font-weight: 900;
-    color: #ffd700;
-    text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
-  }
-  #mode-badge {
-    display: inline-block;
-    margin-top: 4px;
-    padding: 3px 10px;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    border-radius: 4px;
-    background: rgba(212, 175, 55, 0.2);
-    border: 1px solid #d4af37;
-    color: #ffd700;
-    text-transform: uppercase;
-  }
 
-  /* Full-Screen Shadow / Divine Banner */
-  #banner-overlay {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    pointer-events: none;
-    background: radial-gradient(circle, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.85) 100%);
-    opacity: 0;
-    transition: opacity 0.35s ease;
-    z-index: 20;
-  }
-  #banner-overlay.active {
-    opacity: 1;
-  }
-  #banner-main {
-    font-size: clamp(26px, 5vw, 54px);
-    font-weight: 900;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: #ffd700;
-    text-shadow: 0 0 25px rgba(255, 215, 0, 0.9), 0 4px 15px #000;
+  /* Center Adwa Progress Banner */
+  #center-title {
     text-align: center;
-    padding: 0 20px;
-    transform: scale(0.9);
-    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  #banner-overlay.active #banner-main {
-    transform: scale(1);
-  }
-  #banner-sub {
-    font-size: clamp(13px, 2.2vw, 20px);
-    color: #f4e8c1;
-    letter-spacing: 3px;
-    margin-top: 8px;
+    color: #f7e6c4;
     text-shadow: 0 2px 8px #000;
+  }
+  #center-title h2 {
+    font-size: clamp(16px, 3vw, 24px);
+    letter-spacing: 3px;
+    color: #ffd700;
     text-transform: uppercase;
   }
-
-  /* Touch Controls */
-  #controls {
-    position: fixed;
-    bottom: 22px;
-    left: 24px;
-    right: 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 15;
-    pointer-events: none;
+  #center-title span {
+    font-size: 11px;
+    color: #dfd3c3;
+    letter-spacing: 1.5px;
   }
-  .btn-group {
+
+  /* Top-Right Score & Pause */
+  .top-right-group {
     display: flex;
-    gap: 14px;
+    align-items: center;
+    gap: 12px;
     pointer-events: auto;
   }
-  .ctrl-btn {
-    width: 78px;
-    height: 78px;
+  #score-display {
+    font-size: clamp(20px, 4vw, 32px);
+    font-weight: bold;
+    color: #fff5d6;
+    text-shadow: 0 3px 12px rgba(0,0,0,0.9), 0 0 15px rgba(212, 175, 55, 0.5);
+  }
+  #pause-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: rgba(24, 16, 10, 0.88);
+    border: 1.5px solid #c59b27;
+    color: #ffd700;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.7);
+  }
+
+  /* State Crest Badge */
+  #state-crest {
+    position: fixed;
+    bottom: max(108px, calc(env(safe-area-inset-bottom) + 98px));
+    right: max(18px, env(safe-area-inset-right));
+    background: linear-gradient(180deg, rgba(30, 20, 12, 0.92), rgba(14, 9, 5, 0.96));
+    border: 1.5px solid #d4af37;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #ffd700;
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.85);
+  }
+  #state-crest small {
+    display: block;
+    font-size: 9px;
+    color: #cbb682;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  #state-crest strong {
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  /* Responsive Touch Controls */
+  #touch-controls {
+    position: fixed;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    z-index: 12;
+    pointer-events: none;
+  }
+  .ctrl-cluster {
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+  }
+  .game-btn {
+    width: clamp(58px, 14vw, 74px);
+    height: clamp(58px, 14vw, 74px);
     border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(60, 38, 18, 0.85), rgba(18, 10, 4, 0.92));
-    border: 2px solid rgba(212, 175, 55, 0.65);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(212, 175, 55, 0.25);
+    background: radial-gradient(circle at 30% 30%, rgba(58, 38, 20, 0.9), rgba(18, 10, 5, 0.95));
+    border: 2px solid rgba(212, 175, 55, 0.75);
     color: #ffd700;
     font-family: inherit;
+    font-size: 10px;
     font-weight: bold;
-    font-size: 11px;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    outline: none;
-    transition: transform 0.08s ease, border-color 0.15s;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.85);
+    transition: transform 0.08s ease;
   }
-  .ctrl-btn:active {
-    transform: scale(0.92);
-    border-color: #fff;
-    background: radial-gradient(circle at 30% 30%, rgba(110, 75, 30, 0.9), rgba(35, 20, 8, 0.95));
+  .game-btn:active {
+    transform: scale(0.9);
+    border-color: #ffffff;
   }
-  .ctrl-btn span.icon {
-    font-size: 22px;
+  .game-btn .ico {
+    font-size: 20px;
+    line-height: 1;
     margin-bottom: 2px;
   }
-  .attack-btn {
-    width: 90px;
-    height: 90px;
-    border-color: rgba(255, 90, 54, 0.8);
-    background: radial-gradient(circle at 30% 30%, rgba(120, 25, 15, 0.88), rgba(35, 6, 4, 0.95));
+  .strike-btn {
+    width: clamp(68px, 16vw, 84px);
+    height: clamp(68px, 16vw, 84px);
+    background: radial-gradient(circle at 30% 30%, rgba(135, 25, 15, 0.92), rgba(40, 8, 5, 0.96));
+    border-color: #ff6b4a;
   }
 
-  /* Game Over Modal */
-  #game-over {
+  /* Cinematic Awakening Banner */
+  #divine-banner {
+    position: fixed;
+    top: 22%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.85);
+    text-align: center;
+    pointer-events: none;
+    z-index: 18;
+    opacity: 0;
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  #divine-banner.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  #divine-banner h1 {
+    font-size: clamp(24px, 5vw, 46px);
+    color: #ffd700;
+    text-shadow: 0 0 25px rgba(255, 215, 0, 0.95), 0 4px 14px #000;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+  #divine-banner p {
+    font-size: clamp(12px, 2.2vw, 17px);
+    color: #fff8dc;
+    text-shadow: 0 2px 8px #000;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* Modal Overlay (Pause & Game Over) */
+  .overlay-modal {
     position: fixed;
     inset: 0;
-    background: rgba(8, 4, 2, 0.88);
-    backdrop-filter: blur(10px);
+    background: rgba(10, 6, 3, 0.86);
+    backdrop-filter: blur(8px);
     display: none;
     flex-direction: column;
     justify-content: center;
@@ -209,1116 +260,910 @@
     text-align: center;
     padding: 20px;
   }
-  #game-over h1 {
-    font-size: clamp(32px, 6vw, 56px);
-    color: #d4af37;
+  .overlay-modal h1 {
+    font-size: clamp(28px, 6vw, 48px);
+    color: #ffd700;
     letter-spacing: 4px;
     margin-bottom: 10px;
     text-shadow: 0 4px 20px rgba(212, 175, 55, 0.6);
   }
-  #game-over p {
-    font-size: 18px;
-    color: #e0cda9;
-    margin-bottom: 24px;
-  }
-  #restart-btn {
-    padding: 14px 34px;
+  .overlay-modal p {
     font-size: 16px;
+    color: #e2cfb0;
+    margin-bottom: 24px;
+    max-width: 440px;
+    line-height: 1.5;
+  }
+  .gold-action-btn {
+    padding: 13px 32px;
+    font-size: 15px;
     font-family: inherit;
     font-weight: bold;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: #1a0f05;
-    background: linear-gradient(135deg, #ffd700, #c59b27);
+    background: linear-gradient(135deg, #ffd700, #b8860b);
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.4);
+    box-shadow: 0 6px 24px rgba(255, 215, 0, 0.45);
   }
 </style>
+<!-- Load Three.js r128 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-<!-- Cinematic HUD -->
-<div id="hud">
-  <div class="hud-panel">
-    <div class="hud-title">Vitality (Menelik II)</div>
-    <div class="bar-container"><div id="health-fill"></div></div>
-    <div class="hud-title">Saint George Strike (5 Kills)</div>
-    <div class="bar-container"><div id="george-fill"></div></div>
-    <div id="mode-badge">State: Royal Cavalry</div>
+<div id="webgl-container"></div>
+<div id="vignette"></div>
+
+<!-- Top HUD -->
+<div id="hud-top">
+  <div class="bars-box">
+    <div class="bar-label">Emperor Menelik II</div>
+    <div class="bar-track"><div id="hp-fill"></div></div>
+    <div class="bar-label">Saint George Strike (5 Kills)</div>
+    <div class="bar-track"><div id="stgeorge-fill"></div></div>
   </div>
 
-  <div class="hud-panel score-box">
-    <div class="hud-title">Adwa Glory</div>
-    <div id="score-val">0</div>
-    <div id="streak-text" style="font-size:12px; color:#e6c875; margin-top:2px;">Streak: 0x</div>
+  <div id="center-title">
+    <h2>ADWA</h2>
+    <span id="kill-counter">Vanquished: 0</span>
+  </div>
+
+  <div class="top-right-group">
+    <div id="score-display">0</div>
+    <button id="pause-btn" title="Pause Game">❚❚</button>
   </div>
 </div>
 
-<!-- Full-screen shadow notification -->
-<div id="banner-overlay">
-  <div id="banner-main">SAINT GEORGE AWAKENED</div>
-  <div id="banner-sub">Patron of Ethiopia Rides at Adwa</div>
+<!-- State Badge -->
+<div id="state-crest">
+  <small>State</small>
+  <strong id="state-text">Royal Cavalry</strong>
+</div>
+
+<!-- Awakening Banner -->
+<div id="divine-banner">
+  <h1 id="banner-title">SAINT GEORGE AWAKENED</h1>
+  <p id="banner-sub">Qidus Giorgis Rides Before the Ethiopian Host</p>
 </div>
 
 <!-- Touch Controls -->
-<div id="controls">
-  <div class="btn-group">
-    <button class="ctrl-btn" id="btn-down">
-      <span class="icon">⬇</span>
-      <span id="label-down">DISMOUNT</span>
-    </button>
+<div id="touch-controls">
+  <div class="ctrl-cluster">
+    <button class="game-btn" id="btn-left"><span class="ico">◀</span><span>LEFT</span></button>
+    <button class="game-btn" id="btn-right"><span class="ico">▶</span><span>RIGHT</span></button>
   </div>
-  <div class="btn-group">
-    <button class="ctrl-btn" id="btn-up">
-      <span class="icon">⬆</span>
-      <span id="label-up">JUMP</span>
-    </button>
-    <button class="ctrl-btn attack-btn" id="btn-atk">
-      <span class="icon">⚔</span>
-      <span>STRIKE</span>
-    </button>
+  <div class="ctrl-cluster">
+    <button class="game-btn" id="btn-stance"><span class="ico">⬇</span><span id="txt-stance">GROUND</span></button>
+    <button class="game-btn" id="btn-jump"><span class="ico">⬆</span><span id="txt-jump">JUMP</span></button>
+    <button class="game-btn strike-btn" id="btn-attack"><span class="ico">⚔</span><span>STRIKE</span></button>
   </div>
 </div>
 
-<!-- Game Over Screen -->
-<div id="game-over">
-  <h1>THE BATTLE CONTINUES</h1>
-  <p id="final-stats">You defended the mountains of Adwa with valor.</p>
-  <button id="restart-btn">RIDE AGAIN</button>
+<!-- Pause Modal -->
+<div class="overlay-modal" id="pause-modal">
+  <h1>BATTLE PAUSED</h1>
+  <p>The mountains of Soloda await your command. Use Left/Right to switch canyon lanes, Ground to fight on foot, and Strike to vanquish enemies.</p>
+  <button class="gold-action-btn" id="resume-btn">RESUME CHARGE</button>
 </div>
 
-<canvas id="gameCanvas"></canvas>
+<!-- Game Over Modal -->
+<div class="overlay-modal" id="gameover-modal">
+  <h1>VALOR AT ADWA</h1>
+  <p id="final-summary">You rode bravely through the valley of Adwa.</p>
+  <button class="gold-action-btn" id="restart-btn">RIDE AGAIN</button>
+</div>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+// ==========================================
+// 1. THREE.JS SCENE, CAMERA & PBR LIGHTING
+// ==========================================
+const container = document.getElementById('webgl-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xc89d66);
+scene.fog = new THREE.FogExp2(0xc89d66, 0.0085);
 
-let W = canvas.width = window.innerWidth;
-let H = canvas.height = window.innerHeight;
-window.addEventListener('resize', () => {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-  groundY = H * 0.78;
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 350);
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+container.appendChild(renderer.domElement);
+
+// Golden-Hour Canyon Sunlight
+const hemiLight = new THREE.HemisphereLight(0xffe6b3, 0x3d271d, 0.65);
+scene.add(hemiLight);
+
+const sunLight = new THREE.DirectionalLight(0xffdf9e, 1.45);
+sunLight.position.set(35, 65, -45);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 2048;
+sunLight.shadow.mapSize.height = 2048;
+sunLight.shadow.camera.near = 5;
+sunLight.shadow.camera.far = 180;
+const d = 45;
+sunLight.shadow.camera.left = -d;
+sunLight.shadow.camera.right = d;
+sunLight.shadow.camera.top = d;
+sunLight.shadow.camera.bottom = -d;
+scene.add(sunLight);
+
+// Divine Golden Point Light (Activates during Saint George mode)
+const divineLight = new THREE.PointLight(0xffd700, 0, 28);
+scene.add(divineLight);
+
+// ==========================================
+// 2. PROCEDURAL TEXTURES FOR REALISM
+// ==========================================
+function createRockyGroundTexture() {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 512;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#6e4e32';
+  ctx.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 4500; i++) {
+    ctx.fillStyle = Math.random() > 0.5 ? 'rgba(45, 28, 14, 0.35)' : 'rgba(168, 130, 92, 0.3)';
+    const s = 2 + Math.random() * 6;
+    ctx.fillRect(Math.random() * 512, Math.random() * 512, s, s);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(6, 36);
+  return tex;
+}
+
+const groundMat = new THREE.MeshStandardMaterial({
+  map: createRockyGroundTexture(),
+  roughness: 0.92,
+  metalness: 0.05
 });
 
-let groundY = H * 0.78;
+const groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(60, 400), groundMat);
+groundMesh.rotation.x = -Math.PI / 2;
+groundMesh.position.z = -150;
+groundMesh.receiveShadow = true;
+scene.add(groundMesh);
 
-// Game State
-let gameSpeed = 8.5;
-let score = 0;
-let kills = 0;
-let streak = 0;
-let stGeorgeCharge = 0; // 0 to 5
-let isGameOver = false;
-let frameCount = 0;
-let screenShake = 0;
-let lightningFlash = 0;
-
-// Hero States: 'MOUNTED', 'ON_FOOT', 'ST_GEORGE'
-const hero = {
-  x: 150,
-  y: groundY,
-  vy: 0,
-  gravity: 0.78,
-  state: 'MOUNTED', // MOUNTED, ON_FOOT, ST_GEORGE
-  stGeorgeTimer: 0,
-  maxStGeorgeTime: 520, // ~8.5 seconds of divine power
-  health: 100,
-  maxHealth: 100,
-  isJumping: false,
-  isRolling: false,
-  rollTimer: 0,
-  attackTimer: 0,
-  invincibleTimer: 0,
-  runCycle: 0
-};
-
-// Companion Horse when hero jumps to the ground
-const steed = {
-  x: -200,
-  y: groundY,
-  active: false,
-  returning: false,
-  gallopCycle: 0
-};
-
-// Environment & Entities
-const mountains = [];
-const dustParticles = [];
-const embers = [];
-const bloodParticles = [];
-const enemies = [];
-const projectiles = [];
-
-// Initialize Parallax Mountains of Adwa (Soloda Mountains)
-for (let layer = 0; layer < 3; layer++) {
-  const pts = [];
-  let cx = 0;
-  while (cx < W * 3) {
-    pts.push({
-      x: cx,
-      h: (120 + Math.random() * 160) * (1 - layer * 0.22)
-    });
-    cx += 140 + Math.random() * 120;
-  }
-  mountains.push({ layer, pts, speed: (layer + 1) * 0.45 });
-}
-
-// Banner Notification Helper
-let bannerTimeout = null;
-function showBanner(mainText, subText, duration = 1800) {
-  const overlay = document.getElementById('banner-overlay');
-  document.getElementById('banner-main').textContent = mainText;
-  document.getElementById('banner-sub').textContent = subText;
-  overlay.classList.add('active');
-  if (bannerTimeout) clearTimeout(bannerTimeout);
-  bannerTimeout = setTimeout(() => {
-    overlay.classList.remove('active');
-  }, duration);
-}
-
-// Particle Spawners
-function spawnDust(x, y, count = 4, color = 'rgba(185, 142, 92, 0.55)') {
-  for (let i = 0; i < count; i++) {
-    dustParticles.push({
-      x: x + (Math.random() - 0.5) * 20,
-      y: y - Math.random() * 8,
-      vx: -gameSpeed * (0.4 + Math.random() * 0.5),
-      vy: -Math.random() * 2.5 - 0.5,
-      size: 4 + Math.random() * 10,
-      alpha: 0.7,
-      color
-    });
-  }
-}
-
-function spawnHitSparks(x, y, color = '#ff3b1f', count = 14) {
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const spd = 2 + Math.random() * 9;
-    bloodParticles.push({
-      x, y,
-      vx: Math.cos(angle) * spd,
-      vy: Math.sin(angle) * spd - 2,
-      size: 2.5 + Math.random() * 4,
-      life: 1,
-      color
-    });
-  }
-}
-
-// Controls Logic
-function actionUp() {
-  if (isGameOver) return;
-
-  // If on foot and horse is close enough, Jump & Remount!
-  if (hero.state === 'ON_FOOT' && !hero.isJumping) {
-    hero.vy = -15.5;
-    hero.isJumping = true;
-    // Call steed to remount mid-air
-    steed.active = true;
-    steed.returning = true;
-    steed.x = hero.x - 160;
-    spawnDust(hero.x, groundY, 10);
-    return;
-  }
-
-  if (!hero.isJumping) {
-    hero.vy = hero.state === 'ST_GEORGE' ? -17.5 : -16;
-    hero.isJumping = true;
-    spawnDust(hero.x, groundY, 12);
-  }
-}
-
-function actionDown() {
-  if (isGameOver) return;
-
-  // Dismount from horse to fight on foot!
-  if (hero.state === 'MOUNTED') {
-    hero.state = 'ON_FOOT';
-    hero.vy = -8;
-    hero.isJumping = true;
-    steed.active = true;
-    steed.returning = false;
-    steed.x = hero.x;
-    steed.y = groundY;
-    screenShake = 6;
-    spawnDust(hero.x, groundY, 15);
-    updateHUDLabels();
-    showBanner("INFANTRY COMBAT", "Fighting on the Earth of Adwa", 1100);
-  } else if (hero.state === 'ON_FOOT' && !hero.isJumping) {
-    // Tactical combat roll on foot
-    hero.isRolling = true;
-    hero.rollTimer = 24;
-    spawnDust(hero.x, groundY, 8);
-  } else if (hero.isJumping) {
-    // Fast drop
-    hero.vy = 14;
-  }
-}
-
-function actionAttack() {
-  if (isGameOver) return;
-  if (hero.attackTimer <= 0) {
-    hero.attackTimer = hero.state === 'ST_GEORGE' ? 14 : 18;
-
-    // If Saint George, also launch a golden holy lance shockwave
-    if (hero.state === 'ST_GEORGE') {
-      projectiles.push({
-        x: hero.x + 60,
-        y: hero.y - 65,
-        vx: 19,
-        size: 40,
-        life: 60
-      });
-    }
-  }
-}
-
-function triggerStGeorgeTransformation() {
-  hero.state = 'ST_GEORGE';
-  hero.stGeorgeTimer = hero.maxStGeorgeTime;
-  hero.invincibleTimer = 60;
-  steed.active = false;
-  lightningFlash = 1.0;
-  screenShake = 20;
-  spawnHitSparks(hero.x, hero.y - 50, '#ffd700', 40);
-  showBanner("SAINT GEORGE AWAKENED", "Qidus Giorgis Fights for Ethiopia!", 2200);
-  updateHUDLabels();
-}
-
-function updateHUDLabels() {
-  const badge = document.getElementById('mode-badge');
-  const lblDown = document.getElementById('label-down');
-  const lblUp = document.getElementById('label-up');
-
-  if (hero.state === 'MOUNTED') {
-    badge.textContent = 'State: Royal Cavalry (Menelik II)';
-    badge.style.color = '#ffd700';
-    lblDown.textContent = 'DISMOUNT';
-    lblUp.textContent = 'JUMP';
-  } else if (hero.state === 'ON_FOOT') {
-    badge.textContent = 'State: Ground Warrior (On Foot)';
-    badge.style.color = '#ff9f43';
-    lblDown.textContent = 'ROLL';
-    lblUp.textContent = 'REMOUNT';
-  } else if (hero.state === 'ST_GEORGE') {
-    badge.textContent = 'State: SAINT GEORGE (DIVINE)';
-    badge.style.color = '#fffacd';
-    lblDown.textContent = 'DESCEND';
-    lblUp.textContent = 'SKY LEAP';
-  }
-}
-
-// Input Listeners
-window.addEventListener('keydown', (e) => {
-  if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') actionUp();
-  if (e.code === 'ArrowDown' || e.code === 'KeyS') actionDown();
-  if (e.code === 'KeyF' || e.code === 'Enter' || e.code === 'ArrowRight') actionAttack();
+// ==========================================
+// 3. SOLODA CANYON CLIFFS & ROCKS POOL
+// ==========================================
+const cliffMat = new THREE.MeshStandardMaterial({
+  color: 0x5c422c,
+  roughness: 0.95,
+  metalness: 0.05,
+  flatShading: true
 });
 
-document.getElementById('btn-up').addEventListener('pointerdown', (e) => { e.preventDefault(); actionUp(); });
-document.getElementById('btn-down').addEventListener('pointerdown', (e) => { e.preventDefault(); actionDown(); });
-document.getElementById('btn-atk').addEventListener('pointerdown', (e) => { e.preventDefault(); actionAttack(); });
-document.getElementById('restart-btn').addEventListener('click', resetGame);
+const rockProps = [];
+const cliffProps = [];
 
-// Enemy Spawner
-function spawnEnemy() {
-  const types = ['CAVALRY', 'INFANTRY', 'CANNON_BARRICADE'];
-  const type = types[Math.floor(Math.random() * types.length)];
-  enemies.push({
-    type,
-    x: W + 120,
-    y: groundY,
-    vx: type === 'CAVALRY' ? -(gameSpeed * 1.35) : (type === 'INFANTRY' ? -(gameSpeed * 1.1) : -gameSpeed),
-    width: type === 'CANNON_BARRICADE' ? 75 : 65,
-    height: type === 'CAVALRY' ? 110 : (type === 'INFANTRY' ? 75 : 55),
-    dead: false,
-    runCycle: Math.random() * 10
+for (let i = 0; i < 26; i++) {
+  const zPos = -i * 15;
+  // Left & Right Towering Canyon Cliffs
+  [-1, 1].forEach(side => {
+    const h = 28 + Math.random() * 35;
+    const w = 14 + Math.random() * 10;
+    const geo = new THREE.ConeGeometry(w, h, 6);
+    const mesh = new THREE.Mesh(geo, cliffMat);
+    mesh.position.set(side * (22 + Math.random() * 10), h / 2 - 2, zPos);
+    mesh.rotation.y = Math.random() * Math.PI;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+    cliffProps.push(mesh);
+  });
+
+  // Roadside Boulders & Scrub
+  [-1, 1].forEach(side => {
+    const rGeo = new THREE.DodecahedronGeometry(1.2 + Math.random() * 1.8, 1);
+    const rMesh = new THREE.Mesh(rGeo, cliffMat);
+    rMesh.position.set(side * (9.5 + Math.random() * 5), 0.8, zPos + Math.random() * 10);
+    rMesh.scale.y = 0.65;
+    rMesh.castShadow = true;
+    rMesh.receiveShadow = true;
+    scene.add(rMesh);
+    rockProps.push(rMesh);
   });
 }
 
-// Realistic Articulated Horse & Rider Renderer
-function drawArticulatedHorseAndRider(x, y, cycle, mode, atkTimer, isRolling) {
-  ctx.save();
-  ctx.translate(x, y);
+// ==========================================
+// 4. ARTICULATED 3D HORSE & HERO BUILDER
+// ==========================================
+const mats = {
+  whiteHorse: new THREE.MeshStandardMaterial({ color: 0xf5f2eb, roughness: 0.6, metalness: 0.08 }),
+  bayHorse: new THREE.MeshStandardMaterial({ color: 0x4e2712, roughness: 0.65 }),
+  gold: new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.25, metalness: 0.85 }),
+  kabbaBlack: new THREE.MeshStandardMaterial({ color: 0x161210, roughness: 0.8 }),
+  crimsonCape: new THREE.MeshStandardMaterial({ color: 0xb71c1c, roughness: 0.5, side: THREE.DoubleSide }),
+  steelArmor: new THREE.MeshStandardMaterial({ color: 0xd0d8e0, roughness: 0.2, metalness: 0.9 }),
+  skin: new THREE.MeshStandardMaterial({ color: 0x5c3822, roughness: 0.65 }),
+  whiteTunic: new THREE.MeshStandardMaterial({ color: 0xf4efe6, roughness: 0.85 }),
+  khakiColonial: new THREE.MeshStandardMaterial({ color: 0x9e8c6c, roughness: 0.85 }),
+  haloGlow: new THREE.MeshBasicMaterial({ color: 0xfff394, side: THREE.DoubleSide })
+};
 
-  // Ground Shadow
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-  ctx.beginPath();
-  ctx.ellipse(0, 4, mode === 'ON_FOOT' ? 28 : 58, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
+function buildArticulatedHorse(coatMaterial, hasRoyalMedallions = true) {
+  const horseGroup = new THREE.Group();
 
-  const isGeorge = mode === 'ST_GEORGE';
+  // Barrel / Torso
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(1.35, 1.25, 3.1), coatMaterial);
+  torso.position.y = 2.15;
+  torso.castShadow = true;
+  torso.receiveShadow = true;
+  horseGroup.add(torso);
 
-  // Divine Halo & Aura if Saint George
-  if (isGeorge) {
-    const grad = ctx.createRadialGradient(0, -65, 10, 0, -65, 110);
-    grad.addColorStop(0, 'rgba(255, 235, 120, 0.55)');
-    grad.addColorStop(1, 'rgba(255, 215, 0, 0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(0, -65, 110, 0, Math.PI * 2);
-    ctx.fill();
+  // Royal Ethiopian Saddle Blanket & Medallion Harness (Lebeb)
+  if (hasRoyalMedallions) {
+    const blanket = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.75, 1.5), mats.crimsonCape);
+    blanket.position.set(0, 2.35, 0);
+    horseGroup.add(blanket);
+
+    const trim = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.14, 1.55), mats.gold);
+    trim.position.set(0, 2.0, 0);
+    horseGroup.add(trim);
+
+    // Chest & Crupper Golden Medallions (From Menelik Statue & Adwa Paintings)
+    for (let i = -1; i <= 1; i++) {
+      const med = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.08, 12), mats.gold);
+      med.rotation.x = Math.PI / 2;
+      med.position.set(i * 0.42, 2.15, -1.56);
+      horseGroup.add(med);
+    }
   }
 
-  // --- IF FIGHTING ON FOOT ---
-  if (mode === 'ON_FOOT') {
-    if (isRolling) {
-      ctx.rotate(frameCount * 0.45);
-      ctx.translate(0, -25);
-    }
-    const legSwing = Math.sin(cycle * 1.4) * 18;
-    const bob = Math.abs(Math.cos(cycle * 1.4)) * 5;
-    ctx.translate(0, -bob);
+  // Neck & Head Pivot
+  const neckPivot = new THREE.Group();
+  neckPivot.position.set(0, 2.55, -1.25);
 
-    // Back Leg
-    ctx.strokeStyle = '#d8cbb8'; // Traditional white/cream Kemis trousers
-    ctx.lineWidth = 7;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(-4, -34);
-    ctx.lineTo(-4 - legSwing * 0.6, -16);
-    ctx.lineTo(-8 - legSwing, 0);
-    ctx.stroke();
+  const neck = new THREE.Mesh(new THREE.BoxGeometry(0.65, 1.45, 0.85), coatMaterial);
+  neck.position.set(0, 0.55, -0.25);
+  neck.rotation.x = -0.5;
+  neck.castShadow = true;
+  neckPivot.add(neck);
 
-    // Front Leg
-    ctx.strokeStyle = '#f5ebd6';
-    ctx.beginPath();
-    ctx.moveTo(4, -34);
-    ctx.lineTo(4 + legSwing * 0.7, -16);
-    ctx.lineTo(6 + legSwing, 0);
-    ctx.stroke();
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.58, 1.15), coatMaterial);
+  head.position.set(0, 1.15, -0.75);
+  head.rotation.x = 0.25;
+  head.castShadow = true;
+  neckPivot.add(head);
 
-    // Flowing Black & Gold Kabba (Royal Cloak)
-    ctx.fillStyle = '#1c1613';
-    ctx.beginPath();
-    ctx.moveTo(-8, -68);
-    ctx.quadraticCurveTo(-38, -55 + Math.sin(cycle) * 8, -48, -28);
-    ctx.lineTo(-10, -32);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+  // Ears
+  [-0.2, 0.2].forEach(ex => {
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.32, 6), coatMaterial);
+    ear.position.set(ex, 1.52, -0.45);
+    neckPivot.add(ear);
+  });
 
-    // Torso (White traditional tunic + golden trim)
-    ctx.fillStyle = '#f4eedf';
-    ctx.fillRect(-10, -68, 20, 35);
+  if (hasRoyalMedallions) {
+    // Forehead Medallion Strip
+    const noseGold = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.85), mats.gold);
+    noseGold.position.set(0, 1.2, -0.75);
+    noseGold.rotation.x = 0.25;
+    neckPivot.add(noseGold);
+  }
 
-    // Head & Menelik Ras Haile / Royal Headband
-    ctx.fillStyle = '#5c3822';
-    ctx.beginPath();
-    ctx.arc(2, -78, 10, 0, Math.PI * 2);
-    ctx.fill();
+  horseGroup.add(neckPivot);
 
-    // White Ras Band / Imperial Crown Trim
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-8, -85, 19, 5);
-    ctx.fillStyle = '#d4af37';
-    ctx.fillRect(-8, -82, 19, 2);
+  // Flowing Tail
+  const tailPivot = new THREE.Group();
+  tailPivot.position.set(0, 2.45, 1.55);
+  const tailMesh = new THREE.Mesh(new THREE.ConeGeometry(0.28, 1.8, 8), coatMaterial);
+  tailMesh.position.set(0, -0.8, 0.35);
+  tailMesh.rotation.x = 2.75;
+  tailPivot.add(tailMesh);
+  horseGroup.add(tailPivot);
 
-    // Ethiopian Tewahdo Shield (Gasha) with gold embossing
-    ctx.fillStyle = '#3b1e0e';
-    ctx.strokeStyle = '#ffd700';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.ellipse(-6, -50, 12, 18, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+  // 4 Articulated Legs
+  const legs = [];
+  const legCoords = [
+    [-0.48, 1.65, -1.15], [0.48, 1.65, -1.15],
+    [-0.48, 1.65, 1.15],  [0.48, 1.65, 1.15]
+  ];
+  legCoords.forEach(([lx, ly, lz]) => {
+    const legPivot = new THREE.Group();
+    legPivot.position.set(lx, ly, lz);
+    const upper = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.65, 0.32), coatMaterial);
+    upper.position.y = -0.8;
+    upper.castShadow = true;
+    legPivot.add(upper);
+    horseGroup.add(legPivot);
+    legs.push(legPivot);
+  });
 
-    // Sword Arm & Curved Shotel Blade
-    ctx.save();
-    ctx.translate(8, -60);
-    const slashAngle = atkTimer > 0 ? Math.sin((18 - atkTimer) * 0.35) * 2.1 - 0.8 : -0.3;
-    ctx.rotate(slashAngle);
-    ctx.strokeStyle = '#f4eedf';
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(16, 4);
-    ctx.stroke();
+  return { group: horseGroup, legs, neckPivot, tailPivot };
+}
 
-    // Curved Shotel Sword
-    ctx.strokeStyle = '#e8f1f5';
-    ctx.lineWidth = 3.5;
-    ctx.beginPath();
-    ctx.moveTo(16, 4);
-    ctx.quadraticCurveTo(38, -6, 48, 14);
-    ctx.stroke();
+// Build Hero Character (Menelik II + Saint George Meshes)
+const playerRoot = new THREE.Group();
+scene.add(playerRoot);
 
-    if (atkTimer > 0) {
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
-      ctx.lineWidth = 8;
-      ctx.stroke();
-    }
-    ctx.restore();
+const heroSteed = buildArticulatedHorse(mats.whiteHorse, true);
+playerRoot.add(heroSteed.group);
 
-    ctx.restore();
+// Rider Group (Moves from Saddle to Ground seamlessly when dismounting)
+const riderGroup = new THREE.Group();
+riderGroup.position.set(0, 2.85, 0);
+playerRoot.add(riderGroup);
+
+// Rider Legs (Visible when sprinting on foot or riding)
+const riderLegs = [];
+[-0.28, 0.28].forEach(rx => {
+  const lp = new THREE.Group();
+  lp.position.set(rx, 0, 0);
+  const lm = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.15, 0.28), mats.whiteTunic);
+  lm.position.y = -0.55;
+  lp.add(lm);
+  riderGroup.add(lp);
+  riderLegs.push(lp);
+});
+
+// Menelik II Royal Torso (Black & Gold Embroidered Kabba)
+const menelikTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.62, 1.35, 10), mats.kabbaBlack);
+menelikTorso.position.y = 0.65;
+menelikTorso.castShadow = true;
+riderGroup.add(menelikTorso);
+
+// Golden Embroidery Trim on Kabba
+const kabbaGold = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.64, 0.25, 10), mats.gold);
+kabbaGold.position.y = 1.05;
+riderGroup.add(kabbaGold);
+
+// Saint George Steel Cuirass & Red Flowing Cape (Hidden until Saint George Strike)
+const georgeArmor = new THREE.Group();
+const cuirass = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.52, 1.35, 10), mats.steelArmor);
+cuirass.position.y = 0.65;
+georgeArmor.add(cuirass);
+
+const redCape = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2.2, 4, 4), mats.crimsonCape);
+redCape.position.set(0, 0.55, 0.68);
+redCape.rotation.x = 0.38;
+georgeArmor.add(redCape);
+georgeArmor.visible = false;
+riderGroup.add(georgeArmor);
+
+// Rider Head
+const riderHead = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), mats.skin);
+riderHead.position.y = 1.55;
+riderGroup.add(riderHead);
+
+// Menelik II Imperial Crown & White Ras Band
+const menelikCrown = new THREE.Group();
+const rasBand = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.33, 0.14, 12), mats.whiteTunic);
+rasBand.position.y = 1.62;
+menelikCrown.add(rasBand);
+const goldCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.32, 0.35, 10), mats.gold);
+goldCrown.position.y = 1.82;
+menelikCrown.add(goldCrown);
+riderGroup.add(menelikCrown);
+
+// Saint George Plumed Helmet & Radiant Halo
+const georgeHelmet = new THREE.Group();
+const helmDome = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), mats.steelArmor);
+helmDome.position.y = 1.6;
+georgeHelmet.add(helmDome);
+const plume = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.45, 0.65), mats.crimsonCape);
+plume.position.set(0, 1.98, 0.05);
+georgeHelmet.add(plume);
+const haloRing = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.65, 24), mats.haloGlow);
+haloRing.position.set(0, 1.68, 0.22);
+georgeHelmet.add(haloRing);
+georgeHelmet.visible = false;
+riderGroup.add(georgeHelmet);
+
+// Right Weapon Arm (Holds Curved Shotel Sword or Saint George Holy Lance)
+const weaponArm = new THREE.Group();
+weaponArm.position.set(0.55, 1.15, 0);
+riderGroup.add(weaponArm);
+
+const shotelSword = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 1.9), mats.steelArmor);
+shotelSword.position.set(0, 0, -0.9);
+weaponArm.add(shotelSword);
+
+const holyLance = new THREE.Group();
+const lanceShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 4.6, 8), mats.gold);
+lanceShaft.rotation.x = Math.PI / 2;
+lanceShaft.position.z = -1.4;
+holyLance.add(lanceShaft);
+const lanceTip = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.55, 8), mats.haloGlow);
+lanceTip.rotation.x = -Math.PI / 2;
+lanceTip.position.z = -3.8;
+holyLance.add(lanceTip);
+holyLance.visible = false;
+weaponArm.add(holyLance);
+
+// ==========================================
+// 5. FOREGROUND COMPANION HORSE EARS (MATCHING USER REFERENCE PHOTOS)
+// ==========================================
+const foregroundSteedHead = new THREE.Group();
+const fgMane = new THREE.Mesh(new THREE.ConeGeometry(0.52, 0.9, 8), mats.bayHorse);
+fgMane.rotation.x = -0.4;
+foregroundSteedHead.add(fgMane);
+[-0.26, 0.26].forEach(ex => {
+  const ear = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.42, 6), mats.bayHorse);
+  ear.position.set(ex, 0.42, -0.15);
+  ear.rotation.z = ex > 0 ? -0.2 : 0.2;
+  foregroundSteedHead.add(ear);
+});
+scene.add(foregroundSteedHead);
+
+// ==========================================
+// 6. GAMEPLAY STATE & CONTROLS
+// ==========================================
+const LANES = [-4.6, 0, 4.6];
+let currentLane = 1; // 0 = Left, 1 = Center, 2 = Right
+
+const state = {
+  mode: 'MOUNTED', // 'MOUNTED', 'ON_FOOT', 'ST_GEORGE'
+  hp: 100,
+  score: 0,
+  kills: 0,
+  strikeCharge: 0,
+  stGeorgeTimer: 0,
+  maxStGeorgeTime: 480,
+  speed: 0.62,
+  y: 0,
+  vy: 0,
+  isJumping: false,
+  attackTimer: 0,
+  invincible: 0,
+  paused: false,
+  gameOver: false,
+  cycle: 0,
+  shake: 0
+};
+
+const enemies = [];
+const lanceWaves = [];
+const particles3D = [];
+
+function showNotification(title, sub) {
+  const b = document.getElementById('divine-banner');
+  document.getElementById('banner-title').textContent = title;
+  document.getElementById('banner-sub').textContent = sub;
+  b.classList.add('show');
+  setTimeout(() => b.classList.remove('show'), 2100);
+}
+
+function moveLane(dir) {
+  if (state.paused || state.gameOver) return;
+  currentLane = Math.max(0, Math.min(2, currentLane + dir));
+}
+
+function triggerJumpOrRemount() {
+  if (state.paused || state.gameOver) return;
+  if (state.mode === 'ON_FOOT' && !state.isJumping) {
+    // Vault back onto the galloping horse!
+    state.mode = 'MOUNTED';
+    state.vy = 0.34;
+    state.isJumping = true;
+    syncVisualMode();
+    showNotification("ROYAL CAVALRY", "Menelik II Remounted on His Steed");
     return;
   }
-
-  // --- MOUNTED CAVALRY (MENELIK II OR SAINT GEORGE) ---
-  const horseBounce = Math.sin(cycle) * 5;
-  ctx.translate(0, horseBounce);
-
-  const coatDark = isGeorge ? '#cfd8dc' : '#3d2210';
-  const coatMain = isGeorge ? '#ffffff' : '#593118';
-  const coatHighlight = isGeorge ? '#fffde7' : '#7a4626';
-
-  // 4 Articulated Horse Legs (2 Back, 2 Front with knees & hooves)
-  const phases = [0, 0.8, 3.1, 3.9];
-  for (let i = 0; i < 4; i++) {
-    const isBack = i < 2;
-    const isFar = i % 2 === 0;
-    const p = cycle + phases[i];
-    const hipX = isBack ? -28 : 26;
-    const hipY = -44;
-
-    const thighAngle = Math.sin(p) * 0.55;
-    const kneeX = hipX + Math.sin(thighAngle) * 22;
-    const kneeY = hipY + Math.cos(thighAngle) * 22;
-
-    const shinAngle = thighAngle + (Math.cos(p) > 0 ? 0.45 : -0.15);
-    const hoofX = kneeX + Math.sin(shinAngle) * 22;
-    const hoofY = Math.min(0, kneeY + Math.cos(shinAngle) * 22);
-
-    ctx.strokeStyle = isFar ? coatDark : coatMain;
-    ctx.lineWidth = isFar ? 6.5 : 8;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(hipX, hipY);
-    ctx.lineTo(kneeX, kneeY);
-    ctx.lineTo(hoofX, hoofY);
-    ctx.stroke();
-
-    // Golden/Iron Hoof
-    ctx.fillStyle = isGeorge ? '#ffd700' : '#1a1a1a';
-    ctx.fillRect(hoofX - 3, hoofY - 3, 7, 4);
+  if (!state.isJumping) {
+    state.vy = state.mode === 'ST_GEORGE' ? 0.42 : 0.36;
+    state.isJumping = true;
   }
-
-  // Flowing Horse Tail
-  ctx.strokeStyle = isGeorge ? '#fff8e1' : '#1a0f08';
-  ctx.lineWidth = 8;
-  ctx.beginPath();
-  ctx.moveTo(-42, -56);
-  ctx.quadraticCurveTo(-68, -48 + Math.sin(cycle * 2) * 10, -82, -30);
-  ctx.stroke();
-
-  // Muscular Horse Barrel / Body
-  const bodyGrad = ctx.createLinearGradient(-40, -70, 35, -35);
-  bodyGrad.addColorStop(0, coatHighlight);
-  bodyGrad.addColorStop(1, coatMain);
-  ctx.fillStyle = bodyGrad;
-  ctx.beginPath();
-  ctx.ellipse(-2, -52, 44, 20, -0.05, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Royal Ethiopian Saddle Blanket (Green, Yellow, Red & Gold Embroidery)
-  ctx.fillStyle = isGeorge ? '#b71c1c' : '#1b5e20';
-  ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.roundRect(-22, -71, 36, 22, 4);
-  ctx.fill();
-  ctx.stroke();
-
-  // Horse Neck & Head
-  ctx.fillStyle = coatMain;
-  ctx.beginPath();
-  ctx.moveTo(22, -60);
-  ctx.lineTo(44, -96);
-  ctx.lineTo(64, -86);
-  ctx.lineTo(58, -74);
-  ctx.lineTo(42, -78);
-  ctx.lineTo(35, -42);
-  ctx.closePath();
-  ctx.fill();
-
-  // Horse Mane
-  ctx.strokeStyle = isGeorge ? '#ffd700' : '#1a0d05';
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.moveTo(22, -62);
-  ctx.quadraticCurveTo(30, -82, 44, -96);
-  ctx.stroke();
-
-  // Golden Bridle & Reins
-  ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(44, -95);
-  ctx.lineTo(59, -78);
-  ctx.lineTo(8, -76);
-  ctx.stroke();
-
-  // --- RIDER (MENELIK II OR SAINT GEORGE) ---
-  // Flowing Cloak (Red & Gold for St. George, Royal Black/Gold Kabba for Menelik)
-  ctx.fillStyle = isGeorge ? '#c62828' : '#17120e';
-  ctx.beginPath();
-  ctx.moveTo(-8, -104);
-  ctx.quadraticCurveTo(-48, -92 + Math.sin(cycle) * 12, -64, -66);
-  ctx.lineTo(-12, -70);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Rider Torso
-  ctx.fillStyle = isGeorge ? '#ffd700' : '#f5efe2';
-  ctx.fillRect(-10, -104, 20, 34);
-
-  // Rider Head
-  ctx.fillStyle = '#613b23';
-  ctx.beginPath();
-  ctx.arc(2, -115, 9.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  if (isGeorge) {
-    // Saint George Radiant Halo
-    ctx.strokeStyle = '#fff59d';
-    ctx.lineWidth = 3.5;
-    ctx.beginPath();
-    ctx.arc(2, -115, 16, 0, Math.PI * 2);
-    ctx.stroke();
-  } else {
-    // Menelik II Iconic Imperial Crown / Ras Sebhat Scarf
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-7, -122, 18, 4);
-    ctx.fillStyle = '#d4af37';
-    ctx.beginPath();
-    ctx.moveTo(-6, -122);
-    ctx.lineTo(2, -131);
-    ctx.lineTo(10, -122);
-    ctx.fill();
-  }
-
-  // Weapon Arm (Holy Cross Lance for St. George, Curved Shotel for Menelik)
-  ctx.save();
-  ctx.translate(6, -94);
-  const swing = atkTimer > 0 ? Math.sin((18 - atkTimer) * 0.35) * 1.6 : 0.1;
-  ctx.rotate(swing);
-
-  if (isGeorge) {
-    // Long Golden Cross Spear (Lance of Saint George)
-    ctx.strokeStyle = '#ffd700';
-    ctx.lineWidth = 4.5;
-    ctx.beginPath();
-    ctx.moveTo(-25, 6);
-    ctx.lineTo(78, -6);
-    ctx.stroke();
-
-    // Glowing Spearhead
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(78, -11);
-    ctx.lineTo(98, -6);
-    ctx.lineTo(78, -1);
-    ctx.closePath();
-    ctx.fill();
-  } else {
-    // Curved Ethiopian Shotel Sword
-    ctx.strokeStyle = '#e0f7fa';
-    ctx.lineWidth = 3.5;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.quadraticCurveTo(32, -18, 48, 8);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // Traditional Shield on Shoulder
-  ctx.fillStyle = isGeorge ? '#d4af37' : '#3e2723';
-  ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.ellipse(-4, -86, 11, 16, -0.15, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.restore();
 }
 
-// Draw Unmounted Companion Horse (When Menelik leaps to the ground)
-function drawCompanionSteed(x, y, cycle) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.globalAlpha = 0.9;
-  const bounce = Math.sin(cycle) * 4;
-  ctx.translate(0, bounce);
-
-  ctx.fillStyle = '#4a2812';
-  ctx.beginPath();
-  ctx.ellipse(0, -50, 40, 18, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Head & Neck
-  ctx.beginPath();
-  ctx.moveTo(20, -55);
-  ctx.lineTo(40, -90);
-  ctx.lineTo(56, -80);
-  ctx.lineTo(32, -42);
-  ctx.fill();
-
-  // Simple galloping legs
-  ctx.strokeStyle = '#3b1e0d';
-  ctx.lineWidth = 6;
-  const s = Math.sin(cycle) * 18;
-  ctx.beginPath();
-  ctx.moveTo(-25, -40); ctx.lineTo(-25 - s, 0);
-  ctx.moveTo(22, -40); ctx.lineTo(22 + s, 0);
-  ctx.stroke();
-
-  ctx.restore();
+function triggerStanceToggle() {
+  if (state.paused || state.gameOver) return;
+  if (state.mode === 'MOUNTED') {
+    state.mode = 'ON_FOOT';
+    state.vy = 0.22;
+    state.isJumping = true;
+    syncVisualMode();
+    showNotification("GROUND INFANTRY", "Fighting on the Rocky Earth of Adwa");
+  } else if (state.isJumping) {
+    state.vy = -0.35;
+  }
 }
 
-// Draw Enemies (Colonial Cavalry, Rifle Infantry, Field Artillery)
-function drawEnemy(e) {
-  ctx.save();
-  ctx.translate(e.x, e.y);
+function triggerStrike() {
+  if (state.paused || state.gameOver) return;
+  if (state.attackTimer <= 0) {
+    state.attackTimer = 18;
+    // Saint George fires a radiant golden cross wave down the canyon
+    if (state.mode === 'ST_GEORGE') {
+      const waveGeo = new THREE.TorusGeometry(1.6, 0.15, 8, 20);
+      const waveMesh = new THREE.Mesh(waveGeo, mats.haloGlow);
+      waveMesh.position.set(playerRoot.position.x, playerRoot.position.y + 3.2, playerRoot.position.z - 2);
+      scene.add(waveMesh);
+      lanceWaves.push({ mesh: waveMesh, life: 55 });
+    }
+  }
+}
 
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  ctx.beginPath();
-  ctx.ellipse(0, 4, 32, 7, 0, 0, Math.PI * 2);
-  ctx.fill();
+function activateSaintGeorge() {
+  state.mode = 'ST_GEORGE';
+  state.stGeorgeTimer = state.maxStGeorgeTime;
+  state.invincible = 60;
+  state.shake = 0.8;
+  divineLight.intensity = 3.5;
+  syncVisualMode();
+  spawnSparks3D(playerRoot.position.x, 3.5, playerRoot.position.z, 0xffd700, 35);
+  showNotification("SAINT GEORGE AWAKENED", "Qidus Giorgis Leads the Charge at Adwa!");
+}
 
-  if (e.type === 'CAVALRY') {
-    const b = Math.sin(e.runCycle) * 4;
-    ctx.translate(0, b);
-    // Enemy Dark Bay Horse facing Left
-    ctx.fillStyle = '#2b1d16';
-    ctx.beginPath();
-    ctx.ellipse(0, -48, 38, 17, 0, 0, Math.PI * 2);
-    ctx.fill();
+function syncVisualMode() {
+  const isGeorge = state.mode === 'ST_GEORGE';
+  const isFoot = state.mode === 'ON_FOOT';
 
-    // Horse Neck facing Left
-    ctx.beginPath();
-    ctx.moveTo(-20, -55);
-    ctx.lineTo(-42, -86);
-    ctx.lineTo(-56, -75);
-    ctx.lineTo(-30, -40);
-    ctx.fill();
+  georgeArmor.visible = isGeorge;
+  georgeHelmet.visible = isGeorge;
+  holyLance.visible = isGeorge;
 
-    // Legs
-    const leg = Math.sin(e.runCycle) * 16;
-    ctx.strokeStyle = '#1c120d';
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(-22, -38); ctx.lineTo(-22 - leg, 0);
-    ctx.moveTo(22, -38); ctx.lineTo(22 + leg, 0);
-    ctx.stroke();
+  menelikTorso.visible = !isGeorge;
+  kabbaGold.visible = !isGeorge;
+  menelikCrown.visible = !isGeorge;
+  shotelSword.visible = !isGeorge;
 
-    // Colonial Rider (Khaki Tunic & Pith Helmet)
-    ctx.fillStyle = '#bcaaa4';
-    ctx.fillRect(-8, -94, 16, 30);
-    ctx.fillStyle = '#d7ccc8';
-    ctx.beginPath();
-    ctx.arc(0, -104, 9, Math.PI, 0);
-    ctx.fill();
+  document.getElementById('state-text').textContent =
+    isGeorge ? 'Saint George (Divine)' : (isFoot ? 'Ground Warrior' : 'Royal Cavalry');
+  document.getElementById('txt-jump').textContent = isFoot ? 'REMOUNT' : 'JUMP';
+  document.getElementById('txt-stance').textContent = isFoot ? 'DROP' : 'GROUND';
+}
 
-    // Enemy Saber pointing left
-    ctx.strokeStyle = '#cfd8dc';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(-8, -80);
-    ctx.lineTo(-48, -74);
-    ctx.stroke();
+// ==========================================
+// 7. ENEMY SPAWNER & 3D PARTICLES
+// ==========================================
+function spawnEnemyWave() {
+  const laneIdx = Math.floor(Math.random() * 3);
+  const isCavalry = Math.random() > 0.45;
+  const eGroup = new THREE.Group();
 
-  } else if (e.type === 'INFANTRY') {
-    const s = Math.sin(e.runCycle * 1.3) * 14;
-    ctx.strokeStyle = '#8d6e63';
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(-3, -30); ctx.lineTo(-3 - s, 0);
-    ctx.moveTo(3, -30); ctx.lineTo(3 + s, 0);
-    ctx.stroke();
-
-    // Soldier Uniform
-    ctx.fillStyle = '#a1887f';
-    ctx.fillRect(-9, -62, 18, 32);
-
-    // Helmet
-    ctx.fillStyle = '#eceff1';
-    ctx.beginPath();
-    ctx.arc(0, -70, 9, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Bayonet Rifle pointing left
-    ctx.strokeStyle = '#cfd8dc';
-    ctx.lineWidth = 3.5;
-    ctx.beginPath();
-    ctx.moveTo(4, -48);
-    ctx.lineTo(-42, -52);
-    ctx.stroke();
-
-  } else if (e.type === 'CANNON_BARRICADE') {
-    // Artillery Cannon & Wooden Spikes
-    ctx.fillStyle = '#4e342e';
-    ctx.fillRect(-25, -28, 50, 14);
-    // Cannon Barrel
-    ctx.fillStyle = '#37474f';
-    ctx.beginPath();
-    ctx.moveTo(20, -38);
-    ctx.lineTo(-38, -48);
-    ctx.lineTo(-38, -34);
-    ctx.lineTo(20, -24);
-    ctx.fill();
-    // Cannon Wheel
-    ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(0, -20, 18, 0, Math.PI * 2);
-    ctx.stroke();
+  if (isCavalry) {
+    const eHorse = buildArticulatedHorse(mats.bayHorse, false);
+    eGroup.add(eHorse.group);
+    const soldier = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.45, 1.3, 8), mats.khakiColonial);
+    soldier.position.set(0, 3.3, 0);
+    eGroup.add(soldier);
+    const pithHelmet = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.35, 10), mats.whiteTunic);
+    pithHelmet.position.set(0, 4.15, 0);
+    eGroup.add(pithHelmet);
+    eGroup.userData = { type: 'CAVALRY', legs: eHorse.legs, speedMult: 1.35 };
+  } else {
+    // Colonial Rifleman Infantry or Barricade
+    const soldier = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.48, 1.65, 8), mats.khakiColonial);
+    soldier.position.y = 1.4;
+    soldier.castShadow = true;
+    eGroup.add(soldier);
+    const helmet = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.35, 10), mats.whiteTunic);
+    helmet.position.y = 2.45;
+    eGroup.add(helmet);
+    const rifle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 1.7), mats.kabbaBlack);
+    rifle.position.set(0.35, 1.55, 0.5);
+    eGroup.add(rifle);
+    eGroup.userData = { type: 'INFANTRY', legs: [], speedMult: 1.05 };
   }
 
-  ctx.restore();
+  // Face toward the player (+Z)
+  eGroup.rotation.y = Math.PI;
+  eGroup.position.set(LANES[laneIdx], 0, -145);
+  scene.add(eGroup);
+  enemies.push(eGroup);
 }
 
-// Main Update Loop
-function update() {
-  if (isGameOver) return;
-  frameCount++;
-  gameSpeed = Math.min(16, 8.5 + score * 0.015);
+function spawnSparks3D(x, y, z, hexColor, count = 16) {
+  const geo = new THREE.BoxGeometry(0.22, 0.22, 0.22);
+  const mat = new THREE.MeshBasicMaterial({ color: hexColor });
+  for (let i = 0; i < count; i++) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    scene.add(m);
+    particles3D.push({
+      mesh: m,
+      vx: (Math.random() - 0.5) * 0.45,
+      vy: Math.random() * 0.35 + 0.1,
+      vz: (Math.random() - 0.5) * 0.45,
+      life: 28
+    });
+  }
+}
 
-  // Hero physics
-  hero.runCycle += 0.24 * (gameSpeed / 8.5);
-  hero.y += hero.vy;
+// ==========================================
+// 8. INPUT HANDLERS (KEYBOARD, TOUCH, SWIPE & AUTO-PAUSE)
+// ==========================================
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') moveLane(-1);
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') moveLane(1);
+  if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') triggerJumpOrRemount();
+  if (e.code === 'ArrowDown' || e.code === 'KeyS') triggerStanceToggle();
+  if (e.code === 'KeyF' || e.code === 'Enter') triggerStrike();
+  if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
+});
 
-  if (hero.y < groundY) {
-    hero.vy += hero.gravity;
+document.getElementById('btn-left').addEventListener('pointerdown', (e) => { e.preventDefault(); moveLane(-1); });
+document.getElementById('btn-right').addEventListener('pointerdown', (e) => { e.preventDefault(); moveLane(1); });
+document.getElementById('btn-jump').addEventListener('pointerdown', (e) => { e.preventDefault(); triggerJumpOrRemount(); });
+document.getElementById('btn-stance').addEventListener('pointerdown', (e) => { e.preventDefault(); triggerStanceToggle(); });
+document.getElementById('btn-attack').addEventListener('pointerdown', (e) => { e.preventDefault(); triggerStrike(); });
+
+// Swipe Gestures on Canvas
+let touchStartX = 0, touchStartY = 0;
+renderer.domElement.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
+
+renderer.domElement.addEventListener('touchend', (e) => {
+  const dx = e.changedTouches[0].screenX - touchStartX;
+  const dy = e.changedTouches[0].screenY - touchStartY;
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+    moveLane(dx > 0 ? 1 : -1);
+  } else if (Math.abs(dy) > 40) {
+    if (dy < 0) triggerJumpOrRemount();
+    else triggerStanceToggle();
+  }
+}, { passive: true });
+
+// Pause & Auto-Blur Handling
+function togglePause(forceState) {
+  if (state.gameOver) return;
+  state.paused = typeof forceState === 'boolean' ? forceState : !state.paused;
+  document.getElementById('pause-modal').style.display = state.paused ? 'flex' : 'none';
+}
+document.getElementById('pause-btn').addEventListener('click', () => togglePause());
+document.getElementById('resume-btn').addEventListener('click', () => togglePause(false));
+window.addEventListener('blur', () => { if (!state.gameOver) togglePause(true); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && !state.gameOver) togglePause(true); });
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ==========================================
+// 9. MAIN 3D ANIMATION & PHYSICS LOOP
+// ==========================================
+let frame = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  if (state.paused || state.gameOver) return;
+
+  frame++;
+  state.speed = Math.min(1.15, 0.62 + state.score * 0.00008);
+  state.cycle += state.speed * 0.45;
+  state.score += Math.floor(state.speed * 5);
+  document.getElementById('score-display').textContent = state.score.toLocaleString();
+
+  // Scroll Ground Texture & Canyon Cliffs
+  groundMat.map.offset.y -= state.speed * 0.025;
+  cliffProps.forEach(c => {
+    c.position.z += state.speed;
+    if (c.position.z > 25) c.position.z -= 390;
+  });
+  rockProps.forEach(r => {
+    r.position.z += state.speed;
+    if (r.position.z > 25) r.position.z -= 390;
+  });
+
+  // Smooth Lane Interpolation
+  const targetX = LANES[currentLane];
+  playerRoot.position.x += (targetX - playerRoot.position.x) * 0.16;
+
+  // Vertical Jump Physics
+  playerRoot.position.y += state.vy;
+  if (playerRoot.position.y > 0) {
+    state.vy -= 0.019;
   } else {
-    hero.y = groundY;
-    hero.vy = 0;
-    if (hero.isJumping) {
-      hero.isJumping = false;
-      // Check if remounting steed
-      if (hero.state === 'ON_FOOT' && steed.returning) {
-        hero.state = 'MOUNTED';
-        steed.active = false;
-        steed.returning = false;
-        updateHUDLabels();
-        showBanner("ROYAL CAVALRY", "Menelik II Remounted", 1000);
-      }
-      spawnDust(hero.x, groundY, 6);
+    playerRoot.position.y = 0;
+    state.vy = 0;
+    state.isJumping = false;
+  }
+
+  // Position Rider vs Companion Horse based on MOUNTED vs ON_FOOT mode
+  if (state.mode === 'ON_FOOT') {
+    // Menelik runs on the rocky earth while his white horse gallops beside him
+    heroSteed.group.position.x += (-2.3 - heroSteed.group.position.x) * 0.12;
+    riderGroup.position.x += (0.6 - riderGroup.position.x) * 0.12;
+    riderGroup.position.y += (1.15 + Math.abs(Math.sin(state.cycle * 1.3)) * 0.22 - riderGroup.position.y) * 0.2;
+    riderLegs[0].rotation.x = Math.sin(state.cycle * 1.4) * 0.85;
+    riderLegs[1].rotation.x = -Math.sin(state.cycle * 1.4) * 0.85;
+  } else {
+    // Mounted on the Royal Steed
+    heroSteed.group.position.x += (0 - heroSteed.group.position.x) * 0.15;
+    riderGroup.position.x += (0 - riderGroup.position.x) * 0.15;
+    riderGroup.position.y += (2.85 + Math.sin(state.cycle) * 0.15 - riderGroup.position.y) * 0.25;
+    riderLegs[0].rotation.x = 0.35;
+    riderLegs[1].rotation.x = 0.35;
+  }
+
+  // Articulated Horse Gallop Animation
+  heroSteed.group.position.y = Math.sin(state.cycle) * 0.14;
+  heroSteed.group.rotation.x = Math.cos(state.cycle) * 0.06;
+  heroSteed.neckPivot.rotation.x = Math.sin(state.cycle) * 0.12;
+  heroSteed.tailPivot.rotation.x = Math.cos(state.cycle * 1.5) * 0.2;
+  heroSteed.legs[0].rotation.x = Math.sin(state.cycle) * 0.75;
+  heroSteed.legs[1].rotation.x = Math.sin(state.cycle + 0.7) * 0.75;
+  heroSteed.legs[2].rotation.x = Math.cos(state.cycle) * 0.75;
+  heroSteed.legs[3].rotation.x = Math.cos(state.cycle + 0.7) * 0.75;
+
+  // Weapon Slash Animation
+  if (state.attackTimer > 0) {
+    state.attackTimer--;
+    weaponArm.rotation.x = -Math.sin((18 - state.attackTimer) * 0.32) * 1.65;
+    weaponArm.rotation.y = Math.cos((18 - state.attackTimer) * 0.32) * 0.6;
+  } else {
+    weaponArm.rotation.x = 0.15;
+    weaponArm.rotation.y = 0;
+  }
+
+  // Saint George Timer & Aura
+  if (state.mode === 'ST_GEORGE') {
+    state.stGeorgeTimer--;
+    divineLight.position.set(playerRoot.position.x, playerRoot.position.y + 4, playerRoot.position.z);
+    document.getElementById('stgeorge-fill').style.width = `${(state.stGeorgeTimer / state.maxStGeorgeTime) * 100}%`;
+    if (state.stGeorgeTimer <= 0) {
+      state.mode = 'MOUNTED';
+      state.strikeCharge = 0;
+      divineLight.intensity = 0;
+      document.getElementById('stgeorge-fill').style.width = '0%';
+      syncVisualMode();
     }
   }
 
-  // Running dust
-  if (!hero.isJumping && frameCount % 4 === 0) {
-    const col = hero.state === 'ST_GEORGE' ? 'rgba(255, 235, 130, 0.65)' : 'rgba(175, 128, 78, 0.5)';
-    spawnDust(hero.x - 20, groundY, 2, col);
-  }
-
-  // Timers
-  if (hero.attackTimer > 0) hero.attackTimer--;
-  if (hero.invincibleTimer > 0) hero.invincibleTimer--;
-  if (hero.rollTimer > 0) {
-    hero.rollTimer--;
-    if (hero.rollTimer === 0) hero.isRolling = false;
-  }
-
-  // Saint George Transformation Timer
-  if (hero.state === 'ST_GEORGE') {
-    hero.stGeorgeTimer--;
-    document.getElementById('george-fill').style.width = `${(hero.stGeorgeTimer / hero.maxStGeorgeTime) * 100}%`;
-    if (hero.stGeorgeTimer <= 0) {
-      hero.state = 'MOUNTED';
-      stGeorgeCharge = 0;
-      document.getElementById('george-fill').style.width = '0%';
-      updateHUDLabels();
-    }
-  }
-
-  // Companion Steed Logic
-  if (steed.active) {
-    steed.gallopCycle += 0.25;
-    if (steed.returning) {
-      steed.x += (hero.x - steed.x) * 0.18;
-    } else {
-      steed.x -= 3.5;
-      if (steed.x < -180) steed.active = false;
-    }
-  }
+  if (state.invincible > 0) state.invincible--;
 
   // Spawn Enemies
-  if (frameCount % Math.max(45, Math.floor(105 - gameSpeed * 3)) === 0) {
-    spawnEnemy();
+  if (frame % Math.max(38, Math.floor(82 - state.speed * 30)) === 0) {
+    spawnEnemyWave();
   }
 
-  // Projectiles (Saint George Holy Lance Waves)
-  for (let i = projectiles.length - 1; i >= 0; i--) {
-    const p = projectiles[i];
-    p.x += p.vx;
-    p.life--;
-    if (p.life <= 0 || p.x > W + 100) projectiles.splice(i, 1);
+  // Update Saint George Holy Lance Shockwaves
+  for (let i = lanceWaves.length - 1; i >= 0; i--) {
+    const w = lanceWaves[i];
+    w.mesh.position.z -= 2.4;
+    w.life--;
+    if (w.life <= 0) {
+      scene.remove(w.mesh);
+      lanceWaves.splice(i, 1);
+    }
   }
 
   // Update Enemies & Combat Collisions
-  const attackReach = hero.state === 'ST_GEORGE' ? 145 : (hero.state === 'MOUNTED' ? 105 : 85);
+  const strikeRangeZ = state.mode === 'ST_GEORGE' ? 9.5 : 6.8;
 
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
-    e.x += e.vx;
-    e.runCycle += 0.22;
+    e.position.z += state.speed * e.userData.speedMult;
 
-    // Check Saint George Projectile Hit
-    for (let j = projectiles.length - 1; j >= 0; j--) {
-      const p = projectiles[j];
-      if (Math.abs(p.x - e.x) < 55) {
-        e.dead = true;
-        spawnHitSparks(e.x, e.y - 45, '#ffd700', 22);
-        score += 5;
+    // Animate Enemy Horse Legs
+    if (e.userData.legs.length === 4) {
+      e.userData.legs[0].rotation.x = Math.sin(state.cycle * 1.2) * 0.7;
+      e.userData.legs[1].rotation.x = -Math.sin(state.cycle * 1.2) * 0.7;
+      e.userData.legs[2].rotation.x = Math.cos(state.cycle * 1.2) * 0.7;
+      e.userData.legs[3].rotation.x = -Math.cos(state.cycle * 1.2) * 0.7;
+    }
+
+    const dx = Math.abs(e.position.x - playerRoot.position.x);
+    const dz = Math.abs(e.position.z - playerRoot.position.z);
+
+    // Check Lance Wave Hit
+    let waveHit = false;
+    for (let j = lanceWaves.length - 1; j >= 0; j--) {
+      if (Math.abs(lanceWaves[j].mesh.position.x - e.position.x) < 2.6 &&
+          Math.abs(lanceWaves[j].mesh.position.z - e.position.z) < 3.5) {
+        waveHit = true;
         break;
       }
     }
 
-    const distX = e.x - hero.x;
-    const distY = Math.abs(e.y - hero.y);
+    // Check Melee Strike or Saint George Trample
+    const isMeleeHit = state.attackTimer > 0 && dx < 2.6 && e.position.z < 1.5 && e.position.z > -strikeRangeZ;
+    const isGeorgeTrample = state.mode === 'ST_GEORGE' && dx < 2.2 && dz < 3.2;
 
-    // Player Melee Attack Hit
-    if (!e.dead && hero.attackTimer > 0 && distX > -20 && distX < attackReach && distY < 85) {
-      if (e.type === 'CANNON_BARRICADE' && hero.state !== 'ST_GEORGE') {
-        // Cannon requires jumping unless you are Saint George
-      } else {
-        e.dead = true;
-        kills++;
-        streak++;
-        score += hero.state === 'ST_GEORGE' ? 5 : 3;
-        screenShake = 8;
-        spawnHitSparks(e.x, e.y - 50, hero.state === 'ST_GEORGE' ? '#ffd700' : '#ff2a1f', 18);
+    if (waveHit || isMeleeHit || isGeorgeTrample) {
+      spawnSparks3D(e.position.x, 2.5, e.position.z, state.mode === 'ST_GEORGE' ? 0xffd700 : 0xff3b1f, 18);
+      scene.remove(e);
+      enemies.splice(i, 1);
+      state.kills++;
+      state.score += 250;
+      state.shake = 0.35;
+      document.getElementById('kill-counter').textContent = `Vanquished: ${state.kills}`;
 
-        // Charge Saint George Meter
-        if (hero.state !== 'ST_GEORGE') {
-          stGeorgeCharge++;
-          document.getElementById('george-fill').style.width = `${(stGeorgeCharge / 5) * 100}%`;
-          if (stGeorgeCharge >= 5) {
-            triggerStGeorgeTransformation();
-          }
+      if (state.mode !== 'ST_GEORGE') {
+        state.strikeCharge++;
+        document.getElementById('stgeorge-fill').style.width = `${(state.strikeCharge / 5) * 100}%`;
+        if (state.strikeCharge >= 5) {
+          activateSaintGeorge();
         }
-        updateScoreHUD();
+      }
+      continue;
+    }
+
+    // Check Player Damage Collision
+    if (dx < 1.75 && dz < 2.2 && playerRoot.position.y < 1.8 && state.invincible <= 0) {
+      state.hp -= 25;
+      state.invincible = 40;
+      state.shake = 0.65;
+      spawnSparks3D(playerRoot.position.x, 2.5, playerRoot.position.z, 0xd90429, 16);
+      document.getElementById('hp-fill').style.width = `${Math.max(0, state.hp)}%`;
+
+      if (state.hp <= 0) {
+        triggerGameOver();
+        return;
       }
     }
 
-    // Enemy Collision with Hero
-    if (!e.dead && Math.abs(distX) < 42 && distY < e.height - 12) {
-      if (hero.state === 'ST_GEORGE') {
-        // Saint George tramples enemies automatically!
-        e.dead = true;
-        score += 4;
-        screenShake = 10;
-        spawnHitSparks(e.x, e.y - 40, '#ffd700', 20);
-        updateScoreHUD();
-      } else if (hero.invincibleTimer <= 0 && !hero.isRolling) {
-        hero.health -= 22;
-        hero.invincibleTimer = 45;
-        streak = 0;
-        screenShake = 14;
-        spawnHitSparks(hero.x, hero.y - 50, '#d90429', 16);
-        document.getElementById('health-fill').style.width = `${Math.max(0, hero.health)}%`;
-        updateScoreHUD();
-
-        if (hero.health <= 0) {
-          endGame();
-        }
-      }
-    }
-
-    if (e.dead || e.x < -150) {
-      if (!e.dead && e.x < -150) {
-        score += 1;
-        updateScoreHUD();
-      }
+    if (e.position.z > 18) {
+      scene.remove(e);
       enemies.splice(i, 1);
     }
   }
 
-  // Update Dust & Blood Particles
-  for (let i = dustParticles.length - 1; i >= 0; i--) {
-    const p = dustParticles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.size *= 0.96;
-    p.alpha -= 0.025;
-    if (p.alpha <= 0) dustParticles.splice(i, 1);
-  }
-
-  for (let i = bloodParticles.length - 1; i >= 0; i--) {
-    const p = bloodParticles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += 0.38;
-    p.life -= 0.035;
-    if (p.life <= 0) bloodParticles.splice(i, 1);
-  }
-
-  if (screenShake > 0) screenShake *= 0.85;
-  if (lightningFlash > 0) lightningFlash -= 0.05;
-}
-
-function updateScoreHUD() {
-  document.getElementById('score-val').textContent = score;
-  document.getElementById('streak-text').textContent = `Streak: ${streak}x | Kills: ${kills}`;
-}
-
-// Render Loop (Atmospheric Sunset over Adwa Mountains)
-function draw() {
-  ctx.save();
-  if (screenShake > 0.5) {
-    ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
-  }
-
-  // Golden-Hour Dramatic Adwa Sky Gradient
-  const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
-  if (hero.state === 'ST_GEORGE') {
-    skyGrad.addColorStop(0, '#1a0f2e');
-    skyGrad.addColorStop(0.5, '#6b3fa0');
-    skyGrad.addColorStop(1, '#ffd54f');
-  } else {
-    skyGrad.addColorStop(0, '#140804');
-    skyGrad.addColorStop(0.45, '#591c0b');
-    skyGrad.addColorStop(0.8, '#b84a14');
-    skyGrad.addColorStop(1, '#f29f38');
-  }
-  ctx.fillStyle = skyGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  // Glowing Sun & Volumetric God Rays over Soloda Peaks
-  const sunX = W * 0.72;
-  const sunY = groundY - 150;
-  const sunGrad = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, 220);
-  sunGrad.addColorStop(0, 'rgba(255, 250, 210, 0.95)');
-  sunGrad.addColorStop(0.3, 'rgba(255, 180, 60, 0.45)');
-  sunGrad.addColorStop(1, 'rgba(255, 100, 20, 0)');
-  ctx.fillStyle = sunGrad;
-  ctx.beginPath();
-  ctx.arc(sunX, sunY, 220, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Parallax Adwa Mountains
-  const mColors = ['#261008', '#1c0b05', '#120603'];
-  mountains.forEach((m, idx) => {
-    ctx.fillStyle = mColors[idx];
-    ctx.beginPath();
-    ctx.moveTo(0, groundY);
-    for (let i = 0; i < m.pts.length; i++) {
-      const pt = m.pts[i];
-      pt.x -= m.speed * (gameSpeed / 8.5);
-      ctx.lineTo(pt.x, groundY - pt.h);
+  // Update 3D Sparks
+  for (let i = particles3D.length - 1; i >= 0; i--) {
+    const p = particles3D[i];
+    p.mesh.position.x += p.vx;
+    p.mesh.position.y += p.vy;
+    p.mesh.position.z += p.vz;
+    p.vy -= 0.015;
+    p.life--;
+    if (p.life <= 0) {
+      scene.remove(p.mesh);
+      particles3D.splice(i, 1);
     }
-    // Recycle mountain points seamlessly
-    if (m.pts[0].x < -260) {
-      const first = m.pts.shift();
-      first.x = m.pts[m.pts.length - 1].x + 160;
-      m.pts.push(first);
-    }
-    ctx.lineTo(W, groundY);
-    ctx.closePath();
-    ctx.fill();
-  });
-
-  // Earth / Battlefield Ground
-  const earthGrad = ctx.createLinearGradient(0, groundY, 0, H);
-  earthGrad.addColorStop(0, '#3d2010');
-  earthGrad.addColorStop(0.25, '#241107');
-  earthGrad.addColorStop(1, '#0a0402');
-  ctx.fillStyle = earthGrad;
-  ctx.fillRect(0, groundY, W, H - groundY);
-
-  // Rim light on horizon
-  ctx.strokeStyle = 'rgba(255, 195, 85, 0.35)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(0, groundY);
-  ctx.lineTo(W, groundY);
-  ctx.stroke();
-
-  // Draw Companion Steed if active
-  if (steed.active) {
-    drawCompanionSteed(steed.x, steed.y, steed.gallopCycle);
   }
 
-  // Draw Enemies
-  enemies.forEach(drawEnemy);
+  // Third-Person GTA-Style Follow Camera + Companion Horse Ears at Bottom
+  if (state.shake > 0.01) state.shake *= 0.85;
+  else state.shake = 0;
 
-  // Draw Hero (Menelik II or Saint George)
-  drawArticulatedHorseAndRider(hero.x, hero.y, hero.runCycle, hero.state, hero.attackTimer, hero.isRolling);
+  const camTargetX = playerRoot.position.x * 0.55 + (Math.random() - 0.5) * state.shake;
+  const camTargetY = 5.4 + playerRoot.position.y * 0.4 + (Math.random() - 0.5) * state.shake;
+  camera.position.x += (camTargetX - camera.position.x) * 0.12;
+  camera.position.y += (camTargetY - camera.position.y) * 0.12;
+  camera.position.z = 9.8;
+  camera.lookAt(playerRoot.position.x * 0.35, 2.6, -12);
 
-  // Draw Saint George Projectiles
-  projectiles.forEach(p => {
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.strokeStyle = '#ffd700';
-    ctx.shadowColor = '#ffd700';
-    ctx.shadowBlur = 15;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(0, 0, 26, -0.7, 0.7);
-    ctx.stroke();
-    ctx.restore();
-  });
+  // Lock Foreground Companion Horse Ears to Bottom Center of Screen (matching your trail photo)
+  foregroundSteedHead.position.set(
+    camera.position.x,
+    camera.position.y - 2.35 + Math.sin(state.cycle * 1.1) * 0.09,
+    camera.position.z - 2.8
+  );
 
-  // Draw Dust & Sparks
-  dustParticles.forEach(p => {
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  bloodParticles.forEach(p => {
-    ctx.fillStyle = p.color;
-    ctx.globalAlpha = Math.max(0, p.life);
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  });
-
-  // Divine Lightning Flash Overlay
-  if (lightningFlash > 0) {
-    ctx.fillStyle = `rgba(255, 245, 190, ${lightningFlash})`;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  ctx.restore();
+  renderer.render(scene, camera);
 }
 
-function endGame() {
-  isGameOver = true;
-  document.getElementById('final-stats').textContent = `Glory Score: ${score} | Enemies Vanquished: ${kills}`;
-  document.getElementById('game-over').style.display = 'flex';
+function triggerGameOver() {
+  state.gameOver = true;
+  document.getElementById('final-summary').textContent =
+    `Adwa Glory Score: ${state.score.toLocaleString()} | Enemy Forces Vanquished: ${state.kills}`;
+  document.getElementById('gameover-modal').style.display = 'flex';
 }
 
-function resetGame() {
-  isGameOver = false;
-  score = 0;
-  kills = 0;
-  streak = 0;
-  stGeorgeCharge = 0;
-  hero.health = 100;
-  hero.state = 'MOUNTED';
-  hero.y = groundY;
-  hero.vy = 0;
+document.getElementById('restart-btn').addEventListener('click', () => {
+  enemies.forEach(e => scene.remove(e));
   enemies.length = 0;
-  projectiles.length = 0;
-  document.getElementById('health-fill').style.width = '100%';
-  document.getElementById('george-fill').style.width = '0%';
-  document.getElementById('game-over').style.display = 'none';
-  updateHUDLabels();
-  updateScoreHUD();
-}
+  lanceWaves.forEach(w => scene.remove(w.mesh));
+  lanceWaves.length = 0;
 
-function loop() {
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
+  state.hp = 100;
+  state.score = 0;
+  state.kills = 0;
+  state.strikeCharge = 0;
+  state.mode = 'MOUNTED';
+  state.gameOver = false;
+  currentLane = 1;
+  divineLight.intensity = 0;
 
-loop();
+  document.getElementById('hp-fill').style.width = '100%';
+  document.getElementById('stgeorge-fill').style.width = '0%';
+  document.getElementById('kill-counter').textContent = 'Vanquished: 0';
+  document.getElementById('gameover-modal').style.display = 'none';
+  syncVisualMode();
+});
+
+animate();
 </script>
 </body>
 </html>
