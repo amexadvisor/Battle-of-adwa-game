@@ -1,9 +1,9 @@
 /**
- * ADWA 1896 - PROCEDURAL SKELETAL KEYFRAME & ANATOMY ENGINE (animations.js)
- * Zero external downloads required. Upload directly next to index.html.
+ * ADWA 1896 - ADVANCED BIOMECHANICS, CLOTH & ARTILLERY ENGINE (animations.js)
+ * Features: 3-Joint Human Sprint IK, Shield-Wall Brace Pose, 4-Beat Equine Gallop,
+ * Dynamic Ground vs Saddle Kabba Cloth Physics, and 3-Combo Shotel Sword Cleaves.
  */
 window.ADWA_ANIMATIONS = {
-  // Smooth Hermite interpolation for natural muscle & joint motion
   lerp(a, b, t) {
     return a + (b - a) * t;
   },
@@ -12,16 +12,15 @@ window.ADWA_ANIMATIONS = {
     return c * c * (3 - 2 * c);
   },
 
-  // 1. REALISTIC 4-BEAT HORSE GALLOP KEYFRAME SOLVER
-  // Uses true equine biomechanics: Suspension -> Left Hind -> Right Hind -> Left Fore -> Right Fore
+  // 1. REALISTIC 4-BEAT EQUINE GALLOP SOLVER (With Fetlock & Hoof Articulation)
   applyHorseGallop(horse, phase, isRearing = false) {
     if (!horse || !horse.bodyGroup) return;
 
     if (isRearing) {
-      horse.bodyGroup.position.y = 2.35 + Math.sin(phase * 1.4) * 0.15;
+      horse.bodyGroup.position.y = 2.38 + Math.sin(phase * 1.4) * 0.15;
       horse.bodyGroup.rotation.x = -0.38 + Math.cos(phase * 1.4) * 0.06;
-      horse.neckPivot.rotation.x = 0.25 + Math.sin(phase * 2) * 0.1;
-      horse.tailPivot.rotation.x = 0.45 + Math.sin(phase * 2.5) * 0.2;
+      horse.neckPivot.rotation.x = 0.26 + Math.sin(phase * 2.0) * 0.1;
+      horse.tailPivot.rotation.x = 0.48 + Math.sin(phase * 2.4) * 0.22;
     } else {
       horse.bodyGroup.position.y = 2.06 + Math.sin(phase) * 0.15;
       horse.bodyGroup.rotation.x = Math.cos(phase) * 0.075;
@@ -29,7 +28,6 @@ window.ADWA_ANIMATIONS = {
       horse.tailPivot.rotation.x = 0.22 + Math.cos(phase * 1.6) * 0.18;
     }
 
-    // 4-Beat Gallop Phase Offsets: [Front-Left, Front-Right, Back-Left, Back-Right]
     const offsets = [0.0, 0.72, 2.85, 3.55];
     for (let i = 0; i < horse.legs.length; i++) {
       const leg = horse.legs[i];
@@ -37,44 +35,111 @@ window.ADWA_ANIMATIONS = {
       const s = Math.sin(p);
       const c = Math.cos(p);
 
-      // Shoulder / Hip swing
-      leg.hipJoint.rotation.x = s * 0.74;
-
-      // Carpal (Knee) & Hock articulation: bends sharply when hoof lifts off ground
+      leg.hipJoint.rotation.x = s * 0.76;
       const lift = Math.max(0, c);
       if (leg.isFront) {
-        leg.lowerJoint.rotation.x = -lift * 0.98 - 0.08;
-        if (leg.fetlockJoint) leg.fetlockJoint.rotation.x = s * 0.35;
+        leg.lowerJoint.rotation.x = -lift * 1.02 - 0.08;
+        if (leg.fetlockJoint) leg.fetlockJoint.rotation.x = s * 0.38;
       } else {
-        leg.lowerJoint.rotation.x = lift * 0.92 + 0.1;
-        if (leg.fetlockJoint) leg.fetlockJoint.rotation.x = -s * 0.35;
+        leg.lowerJoint.rotation.x = lift * 0.94 + 0.1;
+        if (leg.fetlockJoint) leg.fetlockJoint.rotation.x = -s * 0.38;
       }
     }
   },
 
-  // 2. REALISTIC 3-COMBO ETHIOPIAN SHOTEL SWORD KINEMATICS
-  // Combo 0: High Diagonal Right-to-Left Cavalry Cleave
-  // Combo 1: Low Rising Backhand Slash
-  // Combo 2: Overhead Crushing Imperial Strike
-  applySwordCombatIK(joints, slashProgress, comboIndex, cycle) {
+  // 2. FULL MULTI-JOINTED HUMAN BIOMECHANICS (Solves the "Toy Look" on Foot!)
+  // Articulates Thigh -> Knee -> Shin -> Ankle + Pelvis Tilt + Aggressive Sprint Lean
+  applyHumanLocomotion(riderLegs, riderGroup, torsoPivot, mode, cycle, isShielding) {
+    if (mode === 'ON_FOOT') {
+      const stride = cycle * 1.65;
+      const bounce = Math.abs(Math.cos(stride)) * 0.22;
+      riderGroup.position.y = this.lerp(riderGroup.position.y, 1.08 + bounce, 0.28);
+
+      // Aggressive forward warrior sprint lean (or low braced crouch when shielding)
+      const targetLean = isShielding ? 0.36 : 0.28;
+      riderGroup.rotation.x = this.lerp(riderGroup.rotation.x, targetLean, 0.2);
+      riderGroup.rotation.z = Math.sin(stride) * 0.06; // Natural hip counter-sway
+
+      // Left & Right Multi-Jointed Legs (Thigh + Knee + Boot)
+      for (let i = 0; i < 2; i++) {
+        const leg = riderLegs[i];
+        const p = stride + (i === 0 ? 0 : Math.PI);
+        const thighSwing = Math.sin(p) * (isShielding ? 0.65 : 0.98);
+        // Knee bends sharply when leg swings forward from behind
+        const kneeFlex = Math.max(0, -Math.cos(p - 0.35)) * 1.35 + 0.15;
+
+        leg.hipPivot.rotation.x = thighSwing;
+        leg.hipPivot.rotation.z = i === 0 ? 0.06 : -0.06; // Straight running stance (not wide horse straddle!)
+        if (leg.kneePivot) leg.kneePivot.rotation.x = -kneeFlex;
+        if (leg.anklePivot) leg.anklePivot.rotation.x = Math.sin(p) * 0.25;
+      }
+    } else {
+      // Mounted Cavalry Stirrup Stance
+      riderGroup.position.y = this.lerp(riderGroup.position.y, 2.56 + Math.sin(cycle) * 0.14, 0.28);
+      riderGroup.rotation.x = this.lerp(riderGroup.rotation.x, 0.04, 0.2);
+      riderGroup.rotation.z = 0;
+
+      for (let i = 0; i < 2; i++) {
+        const leg = riderLegs[i];
+        leg.hipPivot.rotation.x = 0.32;
+        leg.hipPivot.rotation.z = i === 0 ? 0.26 : -0.26; // Straddling the saddle
+        if (leg.kneePivot) leg.kneePivot.rotation.x = -0.58;
+        if (leg.anklePivot) leg.anklePivot.rotation.x = 0.2;
+      }
+    }
+  },
+
+  // 3. COMBAT KINEMATICS: SHIELD WALL BRACE, RIFLE AIM & 3-COMBO SHOTEL SLASHES
+  applyCombatKinematics(joints, slashProgress, comboIndex, cycle, isShielding, rifleRecoil, isOnFoot) {
     const { torsoPivot, rightShoulder, rightElbow, rightWrist, leftArm } = joints;
 
-    if (slashProgress <= 0) {
-      // Natural breathing cavalry guard pose (sword held ready at right flank, shield angled left)
-      const breathe = Math.sin(cycle) * 0.055;
-      torsoPivot.rotation.set(0.06 + breathe * 0.4, -0.12, 0);
-      rightShoulder.rotation.set(-0.28 + breathe, 0.25, -0.32);
-      rightElbow.rotation.set(-0.68, 0.1, 0);
-      rightWrist.rotation.set(0.15, 0, 0);
-      leftArm.rotation.set(-0.2, 0.25, 0.15);
+    // A. ACTIVE GASHA SHIELD WALL BLOCK (Deflects Carcano Rifle Volleys & Shrapnel!)
+    if (isShielding && slashProgress <= 0) {
+      torsoPivot.rotation.set(0.18, 0.38, 0);
+      // Swing Left Arm across chest so the Gasha Shield faces straight ahead
+      leftArm.rotation.set(-0.65, 1.15, 0.35);
+      // Tuck Sword Arm back ready to counter-strike
+      rightShoulder.rotation.set(-0.45, -0.35, -0.3);
+      rightElbow.rotation.set(-1.1, 0, 0);
+      rightWrist.rotation.set(0.2, 0, 0);
       return;
     }
 
+    // B. CARCINE / RIFLE SNAP-SHOT RECOIL
+    if (rifleRecoil > 0 && slashProgress <= 0) {
+      const r = rifleRecoil / 14;
+      torsoPivot.rotation.set(-0.15 * r, -0.2, 0);
+      rightShoulder.rotation.set(-1.35 + r * 0.35, 0.15, -0.1);
+      rightElbow.rotation.set(-0.35, 0, 0);
+      leftArm.rotation.set(-0.5, 0.4, 0.2);
+      return;
+    }
+
+    // C. NATURAL BREATHING GUARD OR ARM PUMP WHEN SPRINTING ON FOOT
+    if (slashProgress <= 0) {
+      const breathe = Math.sin(cycle) * 0.055;
+      if (isOnFoot) {
+        const armPump = Math.sin(cycle * 1.65) * 0.45;
+        torsoPivot.rotation.set(0.12, -armPump * 0.35, 0);
+        rightShoulder.rotation.set(-0.35 + armPump, 0.2, -0.28);
+        rightElbow.rotation.set(-0.85, 0.1, 0);
+        rightWrist.rotation.set(0.1, 0, 0);
+        leftArm.rotation.set(-0.35 - armPump * 0.8, 0.35, 0.18);
+      } else {
+        torsoPivot.rotation.set(0.06 + breathe * 0.4, -0.12, 0);
+        rightShoulder.rotation.set(-0.28 + breathe, 0.25, -0.32);
+        rightElbow.rotation.set(-0.68, 0.1, 0);
+        rightWrist.rotation.set(0.15, 0, 0);
+        leftArm.rotation.set(-0.2, 0.25, 0.15);
+      }
+      return;
+    }
+
+    // D. 3-STAGE REALISTIC SHOTEL SWORD CLEAVE COMBOS
     const p = slashProgress;
     const mode = comboIndex % 3;
 
     if (p < 0.24) {
-      // STAGE 1: Coiled Wind-up (muscles tense, torso rotates back, shield braces forward)
       const w = this.smoothstep(p / 0.24);
       leftArm.rotation.set(-0.45 * w, 0.55 * w, 0.25 * w);
 
@@ -95,7 +160,6 @@ window.ADWA_ANIMATIONS = {
         rightWrist.rotation.set(-0.4 * w, 0, 0);
       }
     } else if (p < 0.68) {
-      // STAGE 2: Explosive Whip-Through Cleave (full shoulder extension + wrist snap)
       const raw = (p - 0.24) / 0.44;
       const ease = 1 - Math.pow(1 - raw, 3);
 
@@ -140,7 +204,6 @@ window.ADWA_ANIMATIONS = {
         rightWrist.rotation.set(this.lerp(-0.4, 0.88, ease), 0, 0);
       }
     } else {
-      // STAGE 3: Follow-Through & Return to Guard
       const r = this.smoothstep((p - 0.68) / 0.32);
       torsoPivot.rotation.x = this.lerp(torsoPivot.rotation.x, 0.06, r);
       torsoPivot.rotation.y = this.lerp(torsoPivot.rotation.y, -0.12, r);
@@ -157,22 +220,31 @@ window.ADWA_ANIMATIONS = {
     }
   },
 
-  // 3. TAILORED CONICAL KABBA CLOTH VERTEX SOLVER (Pins top strictly below neck!)
-  updateKabbaCloth(capeGeo, origPos, cycle) {
+  // 4. ADAPTIVE KABBA CLOAK SOLVER (Narrows & flows behind legs when on foot; drapes over horse when mounted!)
+  updateKabbaCloth(capeGeo, origPos, cycle, isOnFoot) {
     const cPos = capeGeo.attributes.position;
     for (let i = 0; i < cPos.count; i++) {
       const ox = origPos.getX(i);
-      const oy = origPos.getY(i); // 0.0 at shoulder collar down to -1.58 at bottom hem
+      const oy = origPos.getY(i);
       const oz = origPos.getZ(i);
 
       const drop = Math.min(1, Math.max(0, -oy / 1.58));
-      // Drape backward over the white horse's hindquarters + harmonic wind waves
-      const rumpCurve = Math.pow(drop, 1.32) * 0.82;
-      const windWave = Math.sin(cycle * 2.2 - drop * 4.8 + ox * 3.2) * 0.13 * drop;
 
-      cPos.setZ(i, oz + rumpCurve + windWave);
-      // Lift bottom back edge so it rests above the horse's croup without clipping
-      cPos.setY(i, oy + Math.pow(drop, 1.9) * 0.28);
+      if (isOnFoot) {
+        // Taper cloak inward on foot so it never looks like a stiff bell/skirt!
+        const narrowFactor = 1.0 - drop * 0.35;
+        const sprintBillow = Math.pow(drop, 1.2) * 0.52 + Math.sin(cycle * 2.8 - drop * 5.2 + ox * 3) * 0.16 * drop;
+        cPos.setX(i, ox * narrowFactor);
+        cPos.setZ(i, oz + sprintBillow);
+        cPos.setY(i, oy + drop * 0.18);
+      } else {
+        // Mounted: wide imperial drape over the white horse's hindquarters
+        const rumpCurve = Math.pow(drop, 1.32) * 0.82;
+        const windWave = Math.sin(cycle * 2.2 - drop * 4.8 + ox * 3.2) * 0.13 * drop;
+        cPos.setX(i, ox);
+        cPos.setZ(i, oz + rumpCurve + windWave);
+        cPos.setY(i, oy + Math.pow(drop, 1.9) * 0.28);
+      }
     }
     cPos.needsUpdate = true;
     capeGeo.computeVertexNormals();
