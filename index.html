@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>ADWA 1896: Emperor Menelik II & Saint George 3D</title>
+<title>ADWA 1896: Total War 3D Engine</title>
 <style>
   * {
     margin: 0;
@@ -31,9 +31,16 @@
     inset: 0;
     pointer-events: none;
     background:
-      radial-gradient(circle at 78% 14%, rgba(255, 232, 165, 0.28) 0%, transparent 48%),
-      radial-gradient(circle at center, transparent 54%, rgba(12, 6, 2, 0.78) 100%);
+      radial-gradient(circle at 78% 14%, rgba(255, 232, 165, 0.26) 0%, transparent 48%),
+      radial-gradient(circle at center, transparent 54%, rgba(10, 5, 2, 0.8) 100%);
     z-index: 2;
+    transition: box-shadow 0.2s ease;
+  }
+  #vignette.volley-danger {
+    box-shadow: inset 0 0 65px rgba(255, 30, 0, 0.75);
+  }
+  #vignette.shield-active {
+    box-shadow: inset 0 0 55px rgba(255, 215, 0, 0.65);
   }
 
   /* Top HUD */
@@ -107,27 +114,27 @@
   .top-right-group {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     pointer-events: auto;
   }
   #score-display {
-    font-size: clamp(18px, 3.8vw, 28px);
+    font-size: clamp(18px, 3.8vw, 26px);
     font-weight: bold;
     color: #fff6db;
     text-shadow: 0 3px 12px #000, 0 0 15px rgba(212, 175, 55, 0.6);
     margin-right: 2px;
   }
   .hud-icon-btn {
-    height: 38px;
+    height: 36px;
     padding: 0 9px;
     border-radius: 7px;
     background: rgba(22, 14, 9, 0.92);
     border: 1.5px solid #c59b27;
     color: #ffd700;
     font-family: inherit;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: bold;
-    letter-spacing: 0.7px;
+    letter-spacing: 0.6px;
     cursor: pointer;
     display: flex;
     justify-content: center;
@@ -140,14 +147,40 @@
     border-color: #fff;
   }
 
+  /* Incoming Rifle Volley Warning Alert */
+  #volley-warning {
+    position: fixed;
+    top: 16%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, rgba(140, 10, 10, 0.92), rgba(200, 25, 15, 0.95), rgba(140, 10, 10, 0.92));
+    border: 2px solid #ffd700;
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: clamp(11px, 2.5vw, 15px);
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    z-index: 19;
+    pointer-events: none;
+    display: none;
+    box-shadow: 0 0 25px rgba(255, 30, 0, 0.85);
+    animation: pulseAlert 0.35s infinite alternate;
+  }
+  @keyframes pulseAlert {
+    from { transform: translateX(-50%) scale(0.96); }
+    to { transform: translateX(-50%) scale(1.04); }
+  }
+
   /* Shield State Badge */
   #state-crest {
     position: fixed;
-    bottom: max(104px, calc(env(safe-area-inset-bottom) + 94px));
-    right: max(14px, env(safe-area-inset-right));
+    bottom: max(100px, calc(env(safe-area-inset-bottom) + 90px));
+    right: max(12px, env(safe-area-inset-right));
     background: linear-gradient(180deg, rgba(28, 20, 14, 0.94), rgba(12, 8, 5, 0.98));
     border: 1.5px solid #d4af37;
-    padding: 6px 13px;
+    padding: 5px 12px;
     border-radius: 6px 6px 16px 16px;
     color: #ffd700;
     text-align: center;
@@ -157,22 +190,22 @@
   }
   #state-crest small {
     display: block;
-    font-size: 8.5px;
+    font-size: 8px;
     color: #cbb682;
     letter-spacing: 1.4px;
     text-transform: uppercase;
   }
   #state-crest strong {
-    font-size: 12.5px;
+    font-size: 12px;
     letter-spacing: 0.8px;
   }
 
   /* Touch Controls */
   #touch-controls {
     position: fixed;
-    bottom: max(14px, env(safe-area-inset-bottom));
-    left: max(12px, env(safe-area-inset-left));
-    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(10px, env(safe-area-inset-left));
+    right: max(10px, env(safe-area-inset-right));
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -181,40 +214,47 @@
   }
   .ctrl-cluster {
     display: flex;
-    gap: 9px;
+    gap: 7px;
     pointer-events: auto;
+    align-items: flex-end;
   }
   .game-btn {
-    width: clamp(56px, 13.5vw, 70px);
-    height: clamp(56px, 13.5vw, 70px);
+    width: clamp(50px, 12.2vw, 66px);
+    height: clamp(50px, 12.2vw, 66px);
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(58, 38, 20, 0.92), rgba(15, 9, 4, 0.96));
     border: 2px solid rgba(212, 175, 55, 0.82);
     color: #ffd700;
     font-family: inherit;
-    font-size: 9.5px;
+    font-size: 8.5px;
     font-weight: bold;
-    letter-spacing: 0.7px;
+    letter-spacing: 0.5px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.9);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.9);
     transition: transform 0.08s ease;
   }
-  .game-btn:active {
+  .game-btn:active, .game-btn.held {
     transform: scale(0.9);
     border-color: #fff;
+    background: radial-gradient(circle at 30% 30%, rgba(120, 85, 30, 0.95), rgba(35, 20, 8, 0.98));
   }
   .game-btn .ico {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1;
     margin-bottom: 2px;
   }
+  .shield-btn {
+    border-color: #5bc0be;
+    background: radial-gradient(circle at 30% 30%, rgba(25, 75, 85, 0.94), rgba(8, 25, 32, 0.98));
+    color: #e0fbfc;
+  }
   .strike-btn {
-    width: clamp(66px, 15.5vw, 82px);
-    height: clamp(66px, 15.5vw, 82px);
+    width: clamp(62px, 14.5vw, 78px);
+    height: clamp(62px, 14.5vw, 78px);
     background: radial-gradient(circle at 30% 30%, rgba(150, 26, 14, 0.95), rgba(45, 8, 5, 0.98));
     border-color: #ff7b5a;
     box-shadow: 0 0 22px rgba(220, 40, 20, 0.45), 0 6px 20px rgba(0,0,0,0.9);
@@ -222,7 +262,7 @@
 
   #divine-banner {
     position: fixed;
-    top: 21%;
+    top: 24%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.85);
     text-align: center;
@@ -237,14 +277,14 @@
     transform: translate(-50%, -50%) scale(1);
   }
   #divine-banner h1 {
-    font-size: clamp(20px, 4.8vw, 40px);
+    font-size: clamp(19px, 4.5vw, 38px);
     color: #ffd700;
     text-shadow: 0 0 25px rgba(255, 215, 0, 0.95), 0 4px 14px #000;
     letter-spacing: 3px;
     text-transform: uppercase;
   }
   #divine-banner p {
-    font-size: clamp(11px, 2.1vw, 15px);
+    font-size: clamp(10.5px, 2vw, 15px);
     color: #fff8dc;
     text-shadow: 0 2px 8px #000;
     letter-spacing: 1.8px;
@@ -273,10 +313,10 @@
     text-shadow: 0 4px 20px rgba(212, 175, 55, 0.6);
   }
   .overlay-modal p {
-    font-size: 15px;
+    font-size: 14.5px;
     color: #e2cfb0;
     margin-bottom: 22px;
-    max-width: 440px;
+    max-width: 460px;
     line-height: 1.5;
   }
   .gold-action-btn {
@@ -294,9 +334,8 @@
     box-shadow: 0 6px 24px rgba(255, 215, 0, 0.45);
   }
 </style>
-<!-- Only Core Three.js + Local animations.js (Zero fragile CDN plugins!) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="./animations.js" onerror="console.log('Using built-in animation engine fallback')"></script>
+<script src="./animations.js" onerror="console.log('Using built-in animation solver')"></script>
 </head>
 <body>
 
@@ -312,7 +351,7 @@
   </div>
 
   <div id="center-title">
-    <h2>ADWA</h2>
+    <h2>ADWA 1896</h2>
     <span id="kill-counter">Vanquished: 0</span>
   </div>
 
@@ -322,6 +361,9 @@
     <button class="hud-icon-btn" id="pause-btn" title="Pause Game">❚❚</button>
   </div>
 </div>
+
+<!-- Incoming Carcano Rifle Volley Warning -->
+<div id="volley-warning">⚠️ ITALIAN RIFLE VOLLEY — HOLD 🛡️ SHIELD!</div>
 
 <div id="state-crest">
   <small>State:</small>
@@ -333,12 +375,15 @@
   <p id="banner-sub">Qidus Giorgis Strikes From the Heavens of Adwa</p>
 </div>
 
+<!-- Expanded Tactical Controls: Left, Right, Shield Wall, Rifle Fire, Ground/Mount, Jump, Sword Strike -->
 <div id="touch-controls">
   <div class="ctrl-cluster">
     <button class="game-btn" id="btn-left"><span class="ico">◀</span><span>LEFT</span></button>
     <button class="game-btn" id="btn-right"><span class="ico">▶</span><span>RIGHT</span></button>
+    <button class="game-btn shield-btn" id="btn-shield"><span class="ico">🛡️</span><span>SHIELD</span></button>
   </div>
   <div class="ctrl-cluster">
+    <button class="game-btn" id="btn-fire"><span class="ico">🔥</span><span>RIFLE</span></button>
     <button class="game-btn" id="btn-stance"><span class="ico">⬇</span><span id="txt-stance">GROUND</span></button>
     <button class="game-btn" id="btn-jump"><span class="ico">⬆</span><span id="txt-jump">JUMP</span></button>
     <button class="game-btn strike-btn" id="btn-attack"><span class="ico">⚔</span><span>STRIKE</span></button>
@@ -347,7 +392,7 @@
 
 <div class="overlay-modal" id="pause-modal">
   <h1>BATTLE PAUSED</h1>
-  <p>Tap 🎥 CAM in the top-right to switch between Hero 3/4 Profile, Close GTA View, Wide Canyon View, or First-Person Saddle View.</p>
+  <p>Tap 🎥 CAM for EAGLE EYE, HERO 3/4, WIDE EPIC, or 1ST PERSON views. Hold 🛡️ SHIELD when Italian firing squads aim their Carcano rifles, and dodge red artillery impact zones!</p>
   <button class="gold-action-btn" id="resume-btn">RESUME CHARGE</button>
 </div>
 
@@ -359,7 +404,7 @@
 
 <script>
 // ============================================================================
-// 0. BUILT-IN FALLBACK ANIMATION ENGINE (Guarantees zero black screen!)
+// 0. BUILT-IN FALLBACK BIOMECHANICS ENGINE (Guarantees 100% crash-free load)
 // ============================================================================
 if (!window.ADWA_ANIMATIONS) {
   window.ADWA_ANIMATIONS = {
@@ -367,7 +412,7 @@ if (!window.ADWA_ANIMATIONS) {
     smoothstep(t) { const c = Math.max(0, Math.min(1, t)); return c * c * (3 - 2 * c); },
     applyHorseGallop(horse, phase, isRearing = false) {
       if (!horse || !horse.bodyGroup) return;
-      horse.bodyGroup.position.y = (isRearing ? 2.35 : 2.06) + Math.sin(phase) * 0.15;
+      horse.bodyGroup.position.y = (isRearing ? 2.38 : 2.06) + Math.sin(phase) * 0.15;
       horse.bodyGroup.rotation.x = (isRearing ? -0.36 : 0) + Math.cos(phase) * 0.075;
       horse.neckPivot.rotation.x = Math.sin(phase - 0.6) * 0.13;
       horse.tailPivot.rotation.x = 0.22 + Math.cos(phase * 1.6) * 0.18;
@@ -375,20 +420,67 @@ if (!window.ADWA_ANIMATIONS) {
       for (let i = 0; i < horse.legs.length; i++) {
         const leg = horse.legs[i];
         const p = phase + offsets[i];
-        leg.hipJoint.rotation.x = Math.sin(p) * 0.74;
+        leg.hipJoint.rotation.x = Math.sin(p) * 0.75;
         const lift = Math.max(0, Math.cos(p));
-        leg.lowerJoint.rotation.x = leg.isFront ? (-lift * 0.95 - 0.08) : (lift * 0.9 + 0.1);
+        leg.lowerJoint.rotation.x = leg.isFront ? (-lift * 1.0 - 0.08) : (lift * 0.92 + 0.1);
       }
     },
-    applySwordCombatIK(joints, slashProgress, comboIndex, cycle) {
+    applyHumanLocomotion(riderLegs, riderGroup, torsoPivot, mode, cycle, isShielding) {
+      if (mode === 'ON_FOOT') {
+        const stride = cycle * 1.65;
+        riderGroup.position.y = this.lerp(riderGroup.position.y, 1.08 + Math.abs(Math.cos(stride)) * 0.22, 0.28);
+        riderGroup.rotation.x = this.lerp(riderGroup.rotation.x, isShielding ? 0.36 : 0.28, 0.2);
+        riderGroup.rotation.z = Math.sin(stride) * 0.06;
+        for (let i = 0; i < 2; i++) {
+          const leg = riderLegs[i];
+          const p = stride + (i === 0 ? 0 : Math.PI);
+          leg.hipPivot.rotation.x = Math.sin(p) * (isShielding ? 0.65 : 0.98);
+          leg.hipPivot.rotation.z = i === 0 ? 0.06 : -0.06;
+          if (leg.kneePivot) leg.kneePivot.rotation.x = -(Math.max(0, -Math.cos(p - 0.35)) * 1.35 + 0.15);
+        }
+      } else {
+        riderGroup.position.y = this.lerp(riderGroup.position.y, 2.56 + Math.sin(cycle) * 0.14, 0.28);
+        riderGroup.rotation.x = this.lerp(riderGroup.rotation.x, 0.04, 0.2);
+        riderGroup.rotation.z = 0;
+        for (let i = 0; i < 2; i++) {
+          const leg = riderLegs[i];
+          leg.hipPivot.rotation.x = 0.32;
+          leg.hipPivot.rotation.z = i === 0 ? 0.26 : -0.26;
+          if (leg.kneePivot) leg.kneePivot.rotation.x = -0.58;
+        }
+      }
+    },
+    applyCombatKinematics(joints, slashProgress, comboIndex, cycle, isShielding, rifleRecoil, isOnFoot) {
       const { torsoPivot, rightShoulder, rightElbow, rightWrist, leftArm } = joints;
+      if (isShielding && slashProgress <= 0) {
+        torsoPivot.rotation.set(0.18, 0.38, 0);
+        leftArm.rotation.set(-0.65, 1.15, 0.35);
+        rightShoulder.rotation.set(-0.45, -0.35, -0.3);
+        rightElbow.rotation.set(-1.1, 0, 0);
+        return;
+      }
+      if (rifleRecoil > 0 && slashProgress <= 0) {
+        const r = rifleRecoil / 14;
+        torsoPivot.rotation.set(-0.15 * r, -0.2, 0);
+        rightShoulder.rotation.set(-1.35 + r * 0.35, 0.15, -0.1);
+        rightElbow.rotation.set(-0.35, 0, 0);
+        return;
+      }
       if (slashProgress <= 0) {
         const b = Math.sin(cycle) * 0.055;
-        torsoPivot.rotation.set(0.06 + b * 0.4, -0.12, 0);
-        rightShoulder.rotation.set(-0.28 + b, 0.25, -0.32);
-        rightElbow.rotation.set(-0.68, 0.1, 0);
-        rightWrist.rotation.set(0.15, 0, 0);
-        leftArm.rotation.set(-0.2, 0.25, 0.15);
+        if (isOnFoot) {
+          const pump = Math.sin(cycle * 1.65) * 0.45;
+          torsoPivot.rotation.set(0.12, -pump * 0.35, 0);
+          rightShoulder.rotation.set(-0.35 + pump, 0.2, -0.28);
+          rightElbow.rotation.set(-0.85, 0.1, 0);
+          leftArm.rotation.set(-0.35 - pump * 0.8, 0.35, 0.18);
+        } else {
+          torsoPivot.rotation.set(0.06 + b * 0.4, -0.12, 0);
+          rightShoulder.rotation.set(-0.28 + b, 0.25, -0.32);
+          rightElbow.rotation.set(-0.68, 0.1, 0);
+          rightWrist.rotation.set(0.15, 0, 0);
+          leftArm.rotation.set(-0.2, 0.25, 0.15);
+        }
         return;
       }
       const p = slashProgress;
@@ -398,29 +490,33 @@ if (!window.ADWA_ANIMATIONS) {
         torsoPivot.rotation.set(-0.08 * w, dir * 0.52 * w, 0);
         rightShoulder.rotation.set(-1.15 * w, dir * 0.75 * w, -dir * 0.55 * w);
         rightElbow.rotation.set(-1.2 * w, 0, 0);
-        rightWrist.rotation.set(-0.3 * w, 0, dir * 0.4 * w);
       } else if (p < 0.68) {
         const ease = 1 - Math.pow(1 - (p - 0.24) / 0.44, 3);
         torsoPivot.rotation.set(this.lerp(-0.08, 0.22, ease), dir * this.lerp(0.52, -0.68, ease), 0);
         rightShoulder.rotation.set(this.lerp(-1.15, 0.65, ease), dir * this.lerp(0.75, -1.25, ease), -0.25);
         rightElbow.rotation.set(this.lerp(-1.2, -0.12, ease), 0, 0);
-        rightWrist.rotation.set(this.lerp(-0.3, 0.78, ease), 0, 0);
       } else {
         const r = this.smoothstep((p - 0.68) / 0.32);
         torsoPivot.rotation.y *= (1 - r);
         rightShoulder.rotation.x = this.lerp(0.65, -0.28, r);
         rightShoulder.rotation.y = this.lerp(-dir * 1.25, 0.25, r);
         rightElbow.rotation.x = this.lerp(-0.12, -0.68, r);
-        rightWrist.rotation.x = this.lerp(0.78, 0.15, r);
       }
     },
-    updateKabbaCloth(capeGeo, origPos, cycle) {
+    updateKabbaCloth(capeGeo, origPos, cycle, isOnFoot) {
       const cPos = capeGeo.attributes.position;
       for (let i = 0; i < cPos.count; i++) {
         const ox = origPos.getX(i), oy = origPos.getY(i), oz = origPos.getZ(i);
         const drop = Math.min(1, Math.max(0, -oy / 1.58));
-        cPos.setZ(i, oz + Math.pow(drop, 1.32) * 0.82 + Math.sin(cycle * 2.2 - drop * 4.8 + ox * 3.2) * 0.13 * drop);
-        cPos.setY(i, oy + Math.pow(drop, 1.9) * 0.28);
+        if (isOnFoot) {
+          cPos.setX(i, ox * (1.0 - drop * 0.35));
+          cPos.setZ(i, oz + Math.pow(drop, 1.2) * 0.52 + Math.sin(cycle * 2.8 - drop * 5.2 + ox * 3) * 0.16 * drop);
+          cPos.setY(i, oy + drop * 0.18);
+        } else {
+          cPos.setX(i, ox);
+          cPos.setZ(i, oz + Math.pow(drop, 1.32) * 0.82 + Math.sin(cycle * 2.2 - drop * 4.8 + ox * 3.2) * 0.13 * drop);
+          cPos.setY(i, oy + Math.pow(drop, 1.9) * 0.28);
+        }
       }
       cPos.needsUpdate = true;
       capeGeo.computeVertexNormals();
@@ -429,14 +525,14 @@ if (!window.ADWA_ANIMATIONS) {
 }
 
 // ============================================================================
-// 1. MOBILE-SAFE WEBGL SCENE, CAMERA PRESETS & LIGHTING
+// 1. WIDE BATTLEFIELD SCENE, 5 CAMERA MODES (INCLUDING EAGLE EYE) & LIGHTING
 // ============================================================================
 const container = document.getElementById('webgl-container');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9b8267);
-scene.fog = new THREE.FogExp2(0x9b8267, 0.0105);
+scene.fog = new THREE.FogExp2(0x9b8267, 0.0082);
 
-const camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 300);
+const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 340);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'default' });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
@@ -444,44 +540,55 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 container.appendChild(renderer.domElement);
 
-// 4 User Camera Presets (Default = HERO 3/4 matching Reference Image 4!)
+// 5 User Camera Presets (Added EAGLE EYE Tactical Overhead View!)
 const CAMERA_PRESETS = [
   {
     name: 'HERO 3/4',
-    desc: 'Cinematic 3/4 Angle (Shows Menelik Face & Royal Kabba Profile)',
-    offsetX: 1.75,
-    offsetY: 4.5,
-    offsetZ: 7.4,
+    desc: 'Cinematic 3/4 Angle (Menelik Profile & Wide Battle Lines)',
+    offsetX: 1.85,
+    offsetY: 4.6,
+    offsetZ: 7.6,
     lookOffsetX: -0.3,
-    lookY: 2.8,
-    lookZ: -14,
+    lookY: 2.7,
+    lookZ: -16,
     showFgEars: true
   },
   {
-    name: 'CLOSE GTA',
-    desc: 'Close Over-The-Shoulder Action Camera',
-    offsetX: 0.55,
-    offsetY: 4.35,
-    offsetZ: 6.3,
-    lookOffsetX: 0.05,
-    lookY: 2.85,
-    lookZ: -16,
+    name: 'EAGLE EYE',
+    desc: 'High Tactical Bird\'s-Eye View Over the Entire Adwa Valley',
+    offsetX: 0.0,
+    offsetY: 22.5,
+    offsetZ: 15.5,
+    lookOffsetX: 0.0,
+    lookY: 0.0,
+    lookZ: -24,
     showFgEars: false
   },
   {
     name: 'WIDE EPIC',
-    desc: 'Panoramic Battlefield View (Shows Allied Ridge Warriors)',
+    desc: 'Panoramic Cavalry Charge View (Shows Allied Wings & Artillery)',
     offsetX: 0.0,
-    offsetY: 6.3,
-    offsetZ: 11.0,
+    offsetY: 6.8,
+    offsetZ: 11.8,
     lookOffsetX: 0.0,
     lookY: 2.5,
-    lookZ: -18,
+    lookZ: -20,
     showFgEars: true
   },
   {
+    name: 'CLOSE GTA',
+    desc: 'Tight Over-The-Shoulder Combat Camera',
+    offsetX: 0.6,
+    offsetY: 4.25,
+    offsetZ: 6.1,
+    lookOffsetX: 0.05,
+    lookY: 2.75,
+    lookZ: -16,
+    showFgEars: false
+  },
+  {
     name: '1ST PERSON',
-    desc: 'First-Person Rider POV Between the Horse Ears',
+    desc: 'First-Person Saddle POV Between the Horse Ears',
     offsetX: 0.0,
     offsetY: 4.25,
     offsetZ: -0.35,
@@ -498,7 +605,7 @@ function createSkyDome() {
   c.width = 256; c.height = 256;
   const ctx = c.getContext('2d');
   const grad = ctx.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, '#323c45');
+  grad.addColorStop(0, '#2e3842');
   grad.addColorStop(0.35, '#736d60');
   grad.addColorStop(0.68, '#d6b88c');
   grad.addColorStop(1, '#9b8267');
@@ -513,33 +620,32 @@ function createSkyDome() {
   ctx.fillRect(0, 0, 256, 256);
 
   const tex = new THREE.CanvasTexture(c);
-  const skyGeo = new THREE.SphereGeometry(240, 20, 14);
+  const skyGeo = new THREE.SphereGeometry(260, 20, 14);
   const skyMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false });
   scene.add(new THREE.Mesh(skyGeo, skyMat));
 }
 createSkyDome();
 
-const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x4a3728, 0.85);
+const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x4a3728, 0.88);
 scene.add(hemiLight);
 
 const sunLight = new THREE.DirectionalLight(0xffe4b5, 1.55);
-sunLight.position.set(38, 64, -45);
+sunLight.position.set(42, 70, -50);
 sunLight.castShadow = true;
-// Mobile GPU safe 1024x1024 shadow map (prevents Android WebGL crash!)
 sunLight.shadow.mapSize.width = 1024;
 sunLight.shadow.mapSize.height = 1024;
-const d = 35;
+const d = 42;
 sunLight.shadow.camera.left = -d;
 sunLight.shadow.camera.right = d;
 sunLight.shadow.camera.top = d;
 sunLight.shadow.camera.bottom = -d;
 scene.add(sunLight);
 
-const stGeorgeLight = new THREE.PointLight(0xffe066, 0, 40);
+const stGeorgeLight = new THREE.PointLight(0xffe066, 0, 45);
 scene.add(stGeorgeLight);
 
 // ============================================================================
-// 2. PROCEDURAL TEXTURES (TAILORED KABBA GOLD EMBROIDERY & CANYON ROCKS)
+// 2. PROCEDURAL TEXTURES & PBR MATERIALS
 // ============================================================================
 function createTailoredKabbaTexture() {
   const c = document.createElement('canvas');
@@ -551,14 +657,12 @@ function createTailoredKabbaTexture() {
   ctx.strokeStyle = '#d4af37';
   ctx.fillStyle = '#ffd700';
 
-  // Collar gold trim
   ctx.lineWidth = 6;
   ctx.beginPath();
   ctx.moveTo(0, 12);
   ctx.lineTo(256, 12);
   ctx.stroke();
 
-  // Royal Ethiopian Sunburst Filigree on Back
   ctx.save();
   ctx.translate(128, 102);
   ctx.lineWidth = 2.5;
@@ -577,7 +681,6 @@ function createTailoredKabbaTexture() {
   ctx.fill();
   ctx.restore();
 
-  // Bottom hem intricate gold border
   ctx.lineWidth = 5;
   ctx.beginPath();
   ctx.moveTo(0, 232);
@@ -604,7 +707,7 @@ function createCanyonRockTexture() {
   ctx.fillStyle = '#735a43';
   ctx.fillRect(0, 0, 256, 256);
 
-  for (let i = 0; i < 2500; i++) {
+  for (let i = 0; i < 2800; i++) {
     const v = Math.random();
     ctx.fillStyle = v > 0.6 ? 'rgba(40, 28, 18, 0.45)' : (v > 0.25 ? 'rgba(148, 120, 92, 0.36)' : 'rgba(90, 102, 62, 0.28)');
     ctx.fillRect(Math.random() * 256, Math.random() * 256, 2 + Math.random() * 5, 2 + Math.random() * 4);
@@ -612,7 +715,7 @@ function createCanyonRockTexture() {
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(6, 18);
+  tex.repeat.set(8, 18);
   return tex;
 }
 
@@ -622,8 +725,10 @@ const kabbaTex = createTailoredKabbaTexture();
 const mats = {
   whiteSteed: new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.45, metalness: 0.05 }),
   baySteed: new THREE.MeshStandardMaterial({ color: 0x4a2511, roughness: 0.52 }),
+  chestnutSteed: new THREE.MeshStandardMaterial({ color: 0x6e3214, roughness: 0.5 }),
   hoofDark: new THREE.MeshStandardMaterial({ color: 0x1a1613, roughness: 0.8 }),
   goldRoyal: new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.22, metalness: 0.88 }),
+  brassCannon: new THREE.MeshStandardMaterial({ color: 0xc59b27, roughness: 0.3, metalness: 0.82 }),
   crimsonTassel: new THREE.MeshStandardMaterial({ color: 0xa81414, roughness: 0.55 }),
   kabbaCloak: new THREE.MeshStandardMaterial({
     map: kabbaTex,
@@ -637,8 +742,9 @@ const mats = {
   gashaShield: new THREE.MeshStandardMaterial({ color: 0x2b170b, roughness: 0.48, metalness: 0.3 }),
   colonialKhaki: new THREE.MeshStandardMaterial({ color: 0x9c8b6e, roughness: 0.85 }),
   pithHelmet: new THREE.MeshStandardMaterial({ color: 0xd8cbb3, roughness: 0.75 }),
+  sandbagMat: new THREE.MeshStandardMaterial({ color: 0x8a795d, roughness: 0.95 }),
   rifleWood: new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.7 }),
-  gunMetal: new THREE.MeshStandardMaterial({ color: 0x2b3036, roughness: 0.3, metalness: 0.85 }),
+  gunMetal: new THREE.MeshStandardMaterial({ color: 0x262b30, roughness: 0.28, metalness: 0.88 }),
   etherealGeorge: new THREE.MeshBasicMaterial({
     color: 0xfff099,
     transparent: true,
@@ -651,126 +757,20 @@ const mats = {
     transparent: true,
     opacity: 0.96,
     blending: THREE.AdditiveBlending
+  }),
+  aimLaserMat: new THREE.MeshBasicMaterial({
+    color: 0xff2a1a,
+    transparent: true,
+    opacity: 0.55,
+    blending: THREE.AdditiveBlending
+  }),
+  tracerMat: new THREE.MeshBasicMaterial({
+    color: 0xfff3a8
   })
 };
 
 // ============================================================================
-// 3. CRAGGY SOLODA CANYON TERRAIN & ALLIED ETHIOPIAN WARRIORS
-// ============================================================================
-const terrainChunks = [];
-const alliedWarriors = [];
-const CHUNK_LEN = 110;
-
-function buildAlliedEthiopianWarrior() {
-  const wGroup = new THREE.Group();
-
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, 1.15, 8), mats.whiteKemis);
-  torso.position.y = 1.35;
-  wGroup.add(torso);
-
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), mats.skinTone);
-  head.position.y = 2.1;
-  wGroup.add(head);
-
-  const headband = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.08, 10), mats.whiteKemis);
-  headband.position.y = 2.16;
-  wGroup.add(headband);
-
-  const legs = [];
-  [-0.16, 0.16].forEach(lx => {
-    const lp = new THREE.Group();
-    lp.position.set(lx, 0.82, 0);
-    const lm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.82, 8), mats.skinTone);
-    lm.position.y = -0.4;
-    lp.add(lm);
-    wGroup.add(lp);
-    legs.push(lp);
-  });
-
-  const spear = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.3, 6), mats.rifleWood);
-  spear.position.set(0.32, 1.85, -0.1);
-  spear.rotation.x = -0.65;
-  wGroup.add(spear);
-
-  const shield = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.16, 12), mats.gashaShield);
-  shield.rotation.z = Math.PI / 2.2;
-  shield.position.set(-0.35, 1.4, -0.1);
-  wGroup.add(shield);
-
-  wGroup.userData = { legs, phase: Math.random() * 10 };
-  return wGroup;
-}
-
-const canyonSharedMat = new THREE.MeshStandardMaterial({
-  map: rockTex,
-  roughness: 0.92,
-  metalness: 0.04,
-  flatShading: true
-});
-
-function buildCanyonChunk(zOffset) {
-  const chunkGroup = new THREE.Group();
-  chunkGroup.position.z = zOffset;
-
-  const geo = new THREE.PlaneGeometry(100, CHUNK_LEN, 32, 32);
-  geo.rotateX(-Math.PI / 2);
-  const pos = geo.attributes.position;
-
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    const z = pos.getZ(i);
-    const distFromCenter = Math.abs(x);
-
-    if (distFromCenter < 7.0) {
-      pos.setY(i, Math.sin(x * 1.5) * Math.cos(z * 0.8) * 0.12);
-    } else {
-      const wallFactor = distFromCenter - 7.0;
-      const ridgeNoise =
-        Math.sin(z * 0.18 + x * 0.25) * 3.0 +
-        Math.cos(z * 0.45 - x * 0.35) * 1.5;
-      pos.setY(i, Math.pow(wallFactor, 1.36) * 1.3 + Math.max(0, ridgeNoise));
-    }
-  }
-  geo.computeVertexNormals();
-
-  const mesh = new THREE.Mesh(geo, canyonSharedMat);
-  mesh.receiveShadow = true;
-  chunkGroup.add(mesh);
-
-  const boulderGeo = new THREE.DodecahedronGeometry(1, 1);
-  for (let i = 0; i < 28; i++) {
-    const side = i % 2 === 0 ? -1 : 1;
-    const bMesh = new THREE.Mesh(boulderGeo, canyonSharedMat);
-    const sx = 0.6 + Math.random() * 1.5;
-    const sy = 0.4 + Math.random() * 1.0;
-    const sz = 0.6 + Math.random() * 1.4;
-    bMesh.scale.set(sx, sy, sz);
-    bMesh.position.set(
-      side * (6.0 + Math.random() * 6.0),
-      sy * 0.45,
-      (Math.random() - 0.5) * CHUNK_LEN
-    );
-    bMesh.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-    chunkGroup.add(bMesh);
-  }
-
-  scene.add(chunkGroup);
-  return chunkGroup;
-}
-
-for (let i = 0; i < 3; i++) {
-  terrainChunks.push(buildCanyonChunk(-i * CHUNK_LEN));
-}
-
-for (let i = 0; i < 8; i++) {
-  const ally = buildAlliedEthiopianWarrior();
-  ally.position.set(-7.6 - (i % 3) * 1.7, 1.5 + (i % 3) * 1.2, -i * 15);
-  scene.add(ally);
-  alliedWarriors.push(ally);
-}
-
-// ============================================================================
-// 4. ORGANIC SCULPTED HORSE ANATOMY & ROYAL HARNESS
+// 3. ORGANIC SCULPTED HORSE ANATOMY & ROYAL HARNESS
 // ============================================================================
 function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   const root = new THREE.Group();
@@ -778,20 +778,20 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   bodyGroup.position.y = 2.06;
   root.add(bodyGroup);
 
-  const chest = new THREE.Mesh(new THREE.SphereGeometry(0.68, 14, 12), coatMat);
+  const chest = new THREE.Mesh(new THREE.SphereGeometry(0.68, 12, 10), coatMat);
   chest.scale.set(0.92, 1.05, 1.15);
   chest.position.set(0, 0.1, -0.95);
   chest.castShadow = true;
   bodyGroup.add(chest);
 
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.65, 1.65, 14), coatMat);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.65, 1.65, 12), coatMat);
   barrel.rotation.x = Math.PI / 2;
   barrel.scale.set(0.95, 1, 1.08);
   barrel.position.set(0, 0.14, -0.05);
   barrel.castShadow = true;
   bodyGroup.add(barrel);
 
-  const croup = new THREE.Mesh(new THREE.SphereGeometry(0.69, 14, 12), coatMat);
+  const croup = new THREE.Mesh(new THREE.SphereGeometry(0.69, 12, 10), coatMat);
   croup.scale.set(0.96, 1.08, 1.22);
   croup.position.set(0, 0.18, 0.92);
   croup.castShadow = true;
@@ -799,7 +799,7 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
 
   if (isRoyalSteed) {
     const saddlePad = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.68, 0.72, 1.25, 14, 1, false, -Math.PI * 0.65, Math.PI * 1.3),
+      new THREE.CylinderGeometry(0.68, 0.72, 1.25, 12, 1, false, -Math.PI * 0.65, Math.PI * 1.3),
       mats.crimsonTassel
     );
     saddlePad.rotation.z = Math.PI / 2;
@@ -807,19 +807,19 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
     saddlePad.position.set(0, 0.22, -0.05);
     bodyGroup.add(saddlePad);
 
-    const harnessStrap = new THREE.Mesh(new THREE.TorusGeometry(0.69, 0.045, 8, 18, Math.PI), mats.goldRoyal);
+    const harnessStrap = new THREE.Mesh(new THREE.TorusGeometry(0.69, 0.045, 6, 14, Math.PI), mats.goldRoyal);
     harnessStrap.rotation.x = 0.35;
     harnessStrap.position.set(0, 0.15, 0.88);
     bodyGroup.add(harnessStrap);
 
     [-0.56, -0.32, 0.32, 0.56].forEach((tx) => {
       const zOff = Math.abs(tx) > 0.4 ? 0.65 : 1.05;
-      const med = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.04, 10), mats.goldRoyal);
+      const med = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.04, 8), mats.goldRoyal);
       med.rotation.z = Math.PI / 2;
       med.position.set(tx > 0 ? tx + 0.1 : tx - 0.1, 0.18, zOff);
       bodyGroup.add(med);
 
-      const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.32, 8), mats.crimsonTassel);
+      const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.32, 6), mats.crimsonTassel);
       tassel.position.set(tx > 0 ? tx + 0.12 : tx - 0.12, -0.04, zOff);
       bodyGroup.add(tassel);
     });
@@ -829,14 +829,14 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   neckPivot.position.set(0, 0.35, -1.25);
   bodyGroup.add(neckPivot);
 
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.52, 1.35, 12), coatMat);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.52, 1.35, 10), coatMat);
   neck.position.set(0, 0.52, -0.32);
   neck.rotation.x = -0.58;
   neckPivot.add(neck);
 
-  for (let m = 0; m < 5; m++) {
-    const locks = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.42, 6), coatMat);
-    locks.position.set(0, 0.25 + m * 0.18, -0.05 - m * 0.08);
+  for (let m = 0; m < 4; m++) {
+    const locks = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.42, 5), coatMat);
+    locks.position.set(0, 0.25 + m * 0.2, -0.05 - m * 0.08);
     locks.rotation.x = -0.9;
     neckPivot.add(locks);
   }
@@ -846,35 +846,29 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
   headGroup.rotation.x = 0.32;
   neckPivot.add(headGroup);
 
-  const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 10), coatMat);
+  const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 8), coatMat);
   cranium.scale.set(0.85, 0.9, 1.1);
   headGroup.add(cranium);
 
-  const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.28, 0.72, 10), coatMat);
+  const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.28, 0.72, 8), coatMat);
   muzzle.rotation.x = Math.PI / 2;
   muzzle.position.set(0, -0.08, -0.42);
   headGroup.add(muzzle);
 
   [-0.17, 0.17].forEach(ex => {
-    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.28, 6), coatMat);
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.28, 5), coatMat);
     ear.position.set(ex, 0.34, 0.05);
     ear.rotation.z = ex > 0 ? -0.15 : 0.15;
     headGroup.add(ear);
   });
 
-  if (isRoyalSteed) {
-    const noseband = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.025, 6, 12), mats.goldRoyal);
-    noseband.position.set(0, -0.06, -0.45);
-    headGroup.add(noseband);
-  }
-
   const tailPivot = new THREE.Group();
   tailPivot.position.set(0, 0.32, 1.55);
   bodyGroup.add(tailPivot);
 
-  for (let t = 0; t < 5; t++) {
-    const strand = new THREE.Mesh(new THREE.CylinderGeometry(0.06 + t * 0.02, 0.16, 1.65, 8), coatMat);
-    strand.position.set((t - 2) * 0.06, -0.68, 0.28 + t * 0.04);
+  for (let t = 0; t < 3; t++) {
+    const strand = new THREE.Mesh(new THREE.CylinderGeometry(0.07 + t * 0.02, 0.16, 1.65, 6), coatMat);
+    strand.position.set((t - 1) * 0.07, -0.68, 0.28 + t * 0.04);
     strand.rotation.x = 0.38 + t * 0.05;
     tailPivot.add(strand);
   }
@@ -894,7 +888,7 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
     upperLimb.position.y = -0.42;
     hipJoint.add(upperLimb);
 
-    const kneeSphere = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), coatMat);
+    const kneeSphere = new THREE.Mesh(new THREE.SphereGeometry(0.14, 6, 6), coatMat);
     kneeSphere.position.y = -0.9;
     hipJoint.add(kneeSphere);
 
@@ -910,7 +904,7 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
     fetlockJoint.position.y = -0.84;
     lowerJoint.add(fetlockJoint);
 
-    const hoof = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.145, 0.18, 8), mats.hoofDark);
+    const hoof = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.145, 0.18, 6), mats.hoofDark);
     hoof.position.set(0, -0.06, -0.03);
     fetlockJoint.add(hoof);
 
@@ -921,17 +915,193 @@ function buildSculptedHorse(coatMat, isRoyalSteed = true) {
 }
 
 // ============================================================================
-// 5. TAILORED CONICAL KABBA CLOAK (NO RECTANGLE, ZERO FACE CLIPPING!)
+// 4. WIDE SOLODA BATTLEFIELD TERRAIN + ALLIED CAVALRY & INFANTRY WINGS
+// ============================================================================
+const terrainChunks = [];
+const alliedInfantry = [];
+const alliedCavalry = [];
+const CHUNK_LEN = 110;
+
+// Wide 5-Lane Valley Floor (-13.5 to +13.5 flat combat floor, steep craggy mountains outside)
+const canyonSharedMat = new THREE.MeshStandardMaterial({
+  map: rockTex,
+  roughness: 0.92,
+  metalness: 0.04,
+  flatShading: true
+});
+
+function buildCanyonChunk(zOffset) {
+  const chunkGroup = new THREE.Group();
+  chunkGroup.position.z = zOffset;
+
+  const geo = new THREE.PlaneGeometry(130, CHUNK_LEN, 36, 30);
+  geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position;
+
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const z = pos.getZ(i);
+    const distFromCenter = Math.abs(x);
+
+    if (distFromCenter < 13.5) {
+      // Wide battle plain with subtle rocky undulations
+      pos.setY(i, Math.sin(x * 0.9) * Math.cos(z * 0.6) * 0.14);
+    } else {
+      const wallFactor = distFromCenter - 13.5;
+      const ridgeNoise =
+        Math.sin(z * 0.18 + x * 0.25) * 3.4 +
+        Math.cos(z * 0.45 - x * 0.35) * 1.8;
+      pos.setY(i, Math.pow(wallFactor, 1.35) * 1.3 + Math.max(0, ridgeNoise));
+    }
+  }
+  geo.computeVertexNormals();
+
+  const mesh = new THREE.Mesh(geo, canyonSharedMat);
+  mesh.receiveShadow = true;
+  chunkGroup.add(mesh);
+
+  const boulderGeo = new THREE.DodecahedronGeometry(1, 1);
+  for (let i = 0; i < 32; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const bMesh = new THREE.Mesh(boulderGeo, canyonSharedMat);
+    const sx = 0.7 + Math.random() * 1.8;
+    const sy = 0.5 + Math.random() * 1.2;
+    const sz = 0.7 + Math.random() * 1.6;
+    bMesh.scale.set(sx, sy, sz);
+    bMesh.position.set(
+      side * (12.8 + Math.random() * 8.0),
+      sy * 0.45,
+      (Math.random() - 0.5) * CHUNK_LEN
+    );
+    bMesh.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+    chunkGroup.add(bMesh);
+  }
+
+  scene.add(chunkGroup);
+  return chunkGroup;
+}
+
+for (let i = 0; i < 3; i++) {
+  terrainChunks.push(buildCanyonChunk(-i * CHUNK_LEN));
+}
+
+// Build Allied Ethiopian Infantry (Charging on the Left & Right Flanks)
+function buildAlliedEthiopianWarrior(hasRifle = false) {
+  const wGroup = new THREE.Group();
+
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, 1.15, 8), mats.whiteKemis);
+  torso.position.y = 1.35;
+  wGroup.add(torso);
+
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), mats.skinTone);
+  head.position.y = 2.1;
+  wGroup.add(head);
+
+  const headband = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.08, 8), mats.whiteKemis);
+  headband.position.y = 2.16;
+  wGroup.add(headband);
+
+  const legs = [];
+  [-0.16, 0.16].forEach(lx => {
+    const lp = new THREE.Group();
+    lp.position.set(lx, 0.82, 0);
+    const lm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.82, 6), mats.skinTone);
+    lm.position.y = -0.4;
+    lp.add(lm);
+    wGroup.add(lp);
+    legs.push(lp);
+  });
+
+  if (hasRifle) {
+    // Allied Ethiopian Rifleman (Gras / Winchester Rifle)
+    const rifle = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 1.5), mats.rifleWood);
+    rifle.position.set(0.32, 1.55, -0.35);
+    wGroup.add(rifle);
+  } else {
+    const spear = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.4, 6), mats.rifleWood);
+    spear.position.set(0.32, 1.85, -0.1);
+    spear.rotation.x = -0.65;
+    wGroup.add(spear);
+  }
+
+  const shield = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.16, 10), mats.gashaShield);
+  shield.rotation.z = Math.PI / 2.2;
+  shield.position.set(-0.35, 1.4, -0.1);
+  wGroup.add(shield);
+
+  wGroup.userData = { legs, phase: Math.random() * 10 };
+  return wGroup;
+}
+
+// Build Allied Ethiopian Cavalry (Soldiers on Horseback Charging With You!)
+function buildAlliedHorseman() {
+  const cGroup = new THREE.Group();
+  const coat = Math.random() > 0.5 ? mats.chestnutSteed : mats.baySteed;
+  const steed = buildSculptedHorse(coat, false);
+  cGroup.add(steed.root);
+
+  const rider = new THREE.Group();
+  rider.position.set(0, 2.55, 0);
+  cGroup.add(rider);
+
+  const tunic = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.4, 1.1, 8), mats.whiteKemis);
+  tunic.position.y = 0.55;
+  rider.add(tunic);
+
+  const cloak = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.1, 8, 1, true), mats.kabbaCloak);
+  cloak.position.set(0, 0.55, 0.12);
+  rider.add(cloak);
+
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), mats.skinTone);
+  head.position.y = 1.28;
+  rider.add(head);
+
+  const shield = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.18, 10), mats.gashaShield);
+  shield.rotation.z = Math.PI / 2.2;
+  shield.position.set(-0.4, 0.85, -0.1);
+  rider.add(shield);
+
+  const spear = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 2.8, 6), mats.rifleWood);
+  spear.rotation.x = Math.PI / 2 - 0.25;
+  spear.position.set(0.42, 0.95, -0.6);
+  rider.add(spear);
+
+  cGroup.userData = { steed, phase: Math.random() * 10 };
+  return cGroup;
+}
+
+// Populate 14 Allied Ridge Infantry + 6 Allied Cavalry Wing Horsemen
+for (let i = 0; i < 14; i++) {
+  const side = i < 9 ? -1 : 1;
+  const ally = buildAlliedEthiopianWarrior(i % 3 === 0);
+  ally.position.set(side * (12.2 + (i % 3) * 1.8), 0.9 + (i % 3) * 1.1, -i * 12);
+  scene.add(ally);
+  alliedInfantry.push(ally);
+}
+
+const ALLIED_CAV_POS = [
+  [-9.8, -6], [9.8, -8],
+  [-11.2, -22], [11.2, -26],
+  [-9.5, -42], [9.5, -46]
+];
+ALLIED_CAV_POS.forEach(([cx, cz]) => {
+  const cav = buildAlliedHorseman();
+  cav.position.set(cx, 0, cz);
+  scene.add(cav);
+  alliedCavalry.push(cav);
+});
+
+// ============================================================================
+// 5. EMPEROR MENELIK II: FULL MULTI-JOINTED LEGS, GASHA SHIELD & SHOTEL
 // ============================================================================
 function createTailoredConicalKabba() {
-  // Open conical cloak: top collar r=0.38 at shoulder line (y=0), flaring to r=0.96 at bottom hem (y=-1.58)
   const capeGeo = new THREE.CylinderGeometry(0.38, 0.96, 1.58, 24, 14, true, -Math.PI * 0.72, Math.PI * 1.44);
-  capeGeo.translate(0, -0.79, 0); // Puts top edge strictly at y = 0.0! Never rises above shoulders!
+  capeGeo.translate(0, -0.79, 0);
   capeGeo.rotateY(Math.PI);
 
   const origPos = capeGeo.attributes.position.clone();
   const capeMesh = new THREE.Mesh(capeGeo, mats.kabbaCloak);
-  capeMesh.position.set(0, 1.10, 0.02); // Pinned at shoulders (Head is high above at y = 1.42!)
+  capeMesh.position.set(0, 1.10, 0.02);
   capeMesh.castShadow = true;
 
   return { capeMesh, capeGeo, origPos };
@@ -984,34 +1154,66 @@ const heroSteed = buildSculptedHorse(mats.whiteSteed, true);
 playerRoot.add(heroSteed.root);
 
 const riderGroup = new THREE.Group();
-riderGroup.position.set(0, 2.55, -0.08);
+riderGroup.position.set(0, 2.56, -0.08);
 playerRoot.add(riderGroup);
 
+// Sculpted Pelvis / Imperial Tunic Skirt so waist & legs connect organically on foot!
+const pelvisSkirt = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.46, 0.42, 12), mats.whiteKemis);
+pelvisSkirt.position.y = 0.02;
+riderGroup.add(pelvisSkirt);
+
+// Multi-Jointed Human Legs (Hip -> Thigh -> Knee Joint -> Calf/Boot -> Ankle/Foot)
 const riderLegs = [];
-[-0.36, 0.36].forEach(lx => {
-  const legPivot = new THREE.Group();
-  legPivot.position.set(lx, 0.05, 0);
-  legPivot.rotation.z = lx > 0 ? -0.25 : 0.25;
+[-0.24, 0.24].forEach(lx => {
+  const hipPivot = new THREE.Group();
+  hipPivot.position.set(lx, -0.05, 0);
+  riderGroup.add(hipPivot);
 
-  const trouser = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.75, 8), mats.whiteKemis);
-  trouser.position.y = -0.35;
-  legPivot.add(trouser);
+  // Upper Thigh in White Kemis Trousers
+  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.125, 0.56, 10), mats.whiteKemis);
+  thigh.position.y = -0.26;
+  thigh.castShadow = true;
+  hipPivot.add(thigh);
 
-  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.095, 0.55, 8), mats.hoofDark);
-  boot.position.y = -0.82;
-  legPivot.add(boot);
+  const kneeSphere = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), mats.whiteKemis);
+  kneeSphere.position.y = -0.54;
+  hipPivot.add(kneeSphere);
 
-  riderGroup.add(legPivot);
-  riderLegs.push(legPivot);
+  // Articulated Knee Pivot
+  const kneePivot = new THREE.Group();
+  kneePivot.position.y = -0.54;
+  hipPivot.add(kneePivot);
+
+  const calfBoot = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.095, 0.54, 10), mats.hoofDark);
+  calfBoot.position.y = -0.26;
+  calfBoot.castShadow = true;
+  kneePivot.add(calfBoot);
+
+  // Articulated Ankle & Boot Foot
+  const anklePivot = new THREE.Group();
+  anklePivot.position.y = -0.52;
+  kneePivot.add(anklePivot);
+
+  const footBoot = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.34), mats.hoofDark);
+  footBoot.position.set(0, -0.04, -0.08);
+  anklePivot.add(footBoot);
+
+  riderLegs.push({ hipPivot, kneePivot, anklePivot });
 });
 
 const torsoPivot = new THREE.Group();
-torsoPivot.position.y = 0.1;
+torsoPivot.position.y = 0.12;
 riderGroup.add(torsoPivot);
 
-const torsoMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 1.12, 12), mats.kabbaCloak);
+const torsoMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.42, 1.12, 12), mats.kabbaCloak);
 torsoMesh.position.y = 0.55;
+torsoMesh.castShadow = true;
 torsoPivot.add(torsoMesh);
+
+// Golden Royal Waist Sash
+const goldBelt = new THREE.Mesh(new THREE.CylinderGeometry(0.41, 0.41, 0.12, 12), mats.goldRoyal);
+goldBelt.position.y = 0.08;
+torsoPivot.add(goldBelt);
 
 const collarGold = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.045, 8, 16), mats.goldRoyal);
 collarGold.rotation.x = Math.PI / 2;
@@ -1065,16 +1267,20 @@ const crownDome = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 8, 0, Math.P
 crownDome.position.y = 0.36;
 headGroup.add(crownDome);
 
-// Left Arm + Conical Ethiopian Gasha Shield
+// Left Arm + Ornate Conical Ethiopian Gasha Shield (Raises during Shield Wall!)
 const leftArm = new THREE.Group();
 leftArm.position.set(-0.46, 0.98, 0);
 torsoPivot.add(leftArm);
 
-const gashaShield = new THREE.Mesh(new THREE.ConeGeometry(0.52, 0.22, 14), mats.gashaShield);
-gashaShield.rotation.z = Math.PI / 2.3;
-gashaShield.position.set(-0.22, -0.15, -0.15);
-const shieldBoss = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), mats.goldRoyal);
-shieldBoss.position.y = 0.11;
+const gashaShield = new THREE.Mesh(new THREE.ConeGeometry(0.62, 0.24, 16), mats.gashaShield);
+gashaShield.rotation.z = Math.PI / 2.2;
+gashaShield.position.set(-0.24, -0.15, -0.18);
+const shieldRim = new THREE.Mesh(new THREE.TorusGeometry(0.61, 0.035, 6, 16), mats.goldRoyal);
+shieldRim.rotation.x = Math.PI / 2;
+shieldRim.position.y = -0.11;
+gashaShield.add(shieldRim);
+const shieldBoss = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 8), mats.goldRoyal);
+shieldBoss.position.y = 0.12;
 gashaShield.add(shieldBoss);
 leftArm.add(gashaShield);
 
@@ -1105,7 +1311,7 @@ rightWrist.add(shotelObj.swordGroup);
 
 const combatJoints = { torsoPivot, rightShoulder, rightElbow, rightWrist, leftArm };
 
-// Dynamic 3D Sword Slash Trail Ribbon
+// 3D Sword Slash Trail Ribbon
 const TRAIL_MAX = 14;
 const trailPoints = [];
 const trailGeo = new THREE.BufferGeometry();
@@ -1237,22 +1443,22 @@ const smokeMat = new THREE.SpriteMaterial({
   depthWrite: false
 });
 
-for (let i = 0; i < 24; i++) {
+for (let i = 0; i < 26; i++) {
   const sp = new THREE.Sprite(smokeMat);
   const sc = 4 + Math.random() * 6;
   sp.scale.set(sc, sc, 1);
-  sp.position.set((Math.random() - 0.5) * 15, 1.2 + Math.random() * 2.2, -Math.random() * 130);
+  sp.position.set((Math.random() - 0.5) * 24, 1.2 + Math.random() * 2.2, -Math.random() * 140);
   scene.add(sp);
   dustClouds.push({ sprite: sp, vx: (Math.random() - 0.5) * 0.04 });
 }
 
 // ============================================================================
-// 9. REALISTIC ENEMY CAVALRY & RIFLE INFANTRY BUILDER
+// 9. AUTHENTIC 1896 ITALIAN WEAPONS: 75MM MOUNTAIN CANNONS, GATLING & SQUADS
 // ============================================================================
-function buildRealisticEnemy(isCavalry) {
+function buildItalianUnit(unitType) {
   const eRoot = new THREE.Group();
 
-  if (isCavalry) {
+  if (unitType === 'CAVALRY') {
     const eHorse = buildSculptedHorse(mats.baySteed, false);
     eRoot.add(eHorse.root);
 
@@ -1281,14 +1487,92 @@ function buildRealisticEnemy(isCavalry) {
     saberArm.add(saber);
 
     eRoot.userData = {
-      isCavalry: true,
+      unitType: 'CAVALRY',
       horse: eHorse,
       saberArm,
       speedMult: 1.32,
       ragdoll: false,
       vx: 0, vy: 0, vz: 0, rx: 0, rz: 0
     };
+  } else if (unitType === 'CANNON_BATTERY') {
+    // Authentic 1896 Italian 75mm Mountain Cannon + Spoked Wheels + Sandbags + Gunner
+    for (let s = -1; s <= 1; s++) {
+      const bag = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.35, 0.85, 8), mats.sandbagMat);
+      bag.rotation.z = Math.PI / 2;
+      bag.position.set(s * 0.75, 0.35, -0.8);
+      eRoot.add(bag);
+    }
+
+    // Spoked Artillery Wheels
+    [-0.78, 0.78].forEach(wx => {
+      const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.08, 8, 16), mats.rifleWood);
+      wheel.rotation.y = Math.PI / 2;
+      wheel.position.set(wx, 0.72, 0);
+      eRoot.add(wheel);
+
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.25, 8), mats.brassCannon);
+      hub.rotation.z = Math.PI / 2;
+      hub.position.set(wx, 0.72, 0);
+      eRoot.add(hub);
+    });
+
+    // Gun Carriage Trail
+    const carriage = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.28, 2.2), mats.rifleWood);
+    carriage.position.set(0, 0.62, 0.5);
+    carriage.rotation.x = 0.28;
+    eRoot.add(carriage);
+
+    // 75mm Brass/Steel Rifled Barrel
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.26, 2.3, 12), mats.brassCannon);
+    barrel.rotation.x = Math.PI / 2 - 0.18;
+    barrel.position.set(0, 1.08, -0.35);
+    eRoot.add(barrel);
+
+    // Artillery Gunner Crewman behind cannon
+    const gunner = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 1.15, 8), mats.colonialKhaki);
+    gunner.position.set(0.65, 1.1, 0.65);
+    eRoot.add(gunner);
+    const gHelm = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), mats.pithHelmet);
+    gHelm.position.set(0.65, 1.85, 0.65);
+    eRoot.add(gHelm);
+
+    eRoot.userData = {
+      unitType: 'CANNON_BATTERY',
+      speedMult: 1.0,
+      hasFiredShell: false,
+      ragdoll: false,
+      vx: 0, vy: 0, vz: 0, rx: 0, rz: 0
+    };
+  } else if (unitType === 'MACHINE_GUN') {
+    // Tripod Hotchkiss / Maxim Revolving Machine Gun Emplacement + Brass Shield
+    const tripod = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.95, 4), mats.gunMetal);
+    tripod.position.y = 0.48;
+    eRoot.add(tripod);
+
+    const gunShield = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.75, 0.08), mats.brassCannon);
+    gunShield.position.set(0, 1.15, -0.25);
+    eRoot.add(gunShield);
+
+    const mgBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.55, 8), mats.gunMetal);
+    mgBarrel.rotation.x = Math.PI / 2;
+    mgBarrel.position.set(0, 1.15, -0.65);
+    eRoot.add(mgBarrel);
+
+    const operator = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.4, 1.1, 8), mats.colonialKhaki);
+    operator.position.set(0, 0.95, 0.55);
+    eRoot.add(operator);
+    const opHelm = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), mats.pithHelmet);
+    opHelm.position.set(0, 1.68, 0.55);
+    eRoot.add(opHelm);
+
+    eRoot.userData = {
+      unitType: 'MACHINE_GUN',
+      speedMult: 1.0,
+      ragdoll: false,
+      vx: 0, vy: 0, vz: 0, rx: 0, rz: 0
+    };
   } else {
+    // Carcano M1891 Rifleman (With Aiming Laser Sightline for Firing Squad Volleys!)
     const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.15, 8), mats.colonialKhaki);
     torso.position.y = 1.45;
     eRoot.add(torso);
@@ -1324,12 +1608,22 @@ function buildRealisticEnemy(isCavalry) {
     bayonet.rotation.x = -Math.PI / 2;
     bayonet.position.set(0, 0.02, -1.45);
     rifleGroup.add(bayonet);
+
+    // Red Aiming Sightline Beam (Appears when Firing Squad locks onto player!)
+    const aimLaser = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 48, 6), mats.aimLaserMat);
+    aimLaser.rotation.x = Math.PI / 2;
+    aimLaser.position.set(0, 0.06, -25);
+    aimLaser.visible = false;
+    rifleGroup.add(aimLaser);
+
     eRoot.add(rifleGroup);
 
     eRoot.userData = {
-      isCavalry: false,
+      unitType: 'INFANTRY',
       infantryLegs: legs,
-      speedMult: 1.05,
+      aimLaser,
+      isVolleySquad: false,
+      speedMult: 1.02,
       ragdoll: false,
       vx: 0, vy: 0, vz: 0, rx: 0, rz: 0
     };
@@ -1340,10 +1634,10 @@ function buildRealisticEnemy(isCavalry) {
 }
 
 // ============================================================================
-// 10. GAMEPLAY STATE, CAMERA PREFERENCE SWITCHER & CONTROLS
+// 10. 5-LANE WIDE BATTLEFIELD STATE, SHIELD WALL & ARTILLERY BALLISTICS
 // ============================================================================
-const LANES = [-3.8, 0, 3.8];
-let currentLane = 1;
+const LANES = [-7.6, -3.8, 0, 3.8, 7.6];
+let currentLane = 2; // Center lane of 5-lane valley
 
 const state = {
   mode: 'MOUNTED',
@@ -1357,6 +1651,9 @@ const state = {
   y: 0,
   vy: 0,
   isJumping: false,
+  isShielding: false,
+  rifleRecoil: 0,
+  volleyTimer: 0, // Counts down when a lined Italian firing squad aims a volley!
   slashProgress: 0,
   comboIndex: 0,
   invincible: 0,
@@ -1368,6 +1665,8 @@ const state = {
 
 const enemies = [];
 const spearBolts = [];
+const playerBullets = [];
+const artilleryShells = [];
 const sparkParticles = [];
 
 function showBanner(title, sub) {
@@ -1386,12 +1685,40 @@ function switchCameraPreference() {
   riderGroup.visible = preset.name !== '1ST PERSON';
   showBanner(`CAMERA: ${preset.name}`, preset.desc);
 }
-
 document.getElementById('cam-btn').addEventListener('click', switchCameraPreference);
 
 function moveLane(dir) {
   if (state.paused || state.gameOver) return;
-  currentLane = Math.max(0, Math.min(2, currentLane + dir));
+  currentLane = Math.max(0, Math.min(LANES.length - 1, currentLane + dir));
+}
+
+function setShieldWall(active) {
+  if (state.paused || state.gameOver) return;
+  state.isShielding = active;
+  const btn = document.getElementById('btn-shield');
+  const vig = document.getElementById('vignette');
+  if (active) {
+    btn.classList.add('held');
+    vig.classList.add('shield-active');
+  } else {
+    btn.classList.remove('held');
+    vig.classList.remove('shield-active');
+  }
+}
+
+function triggerRifleFire() {
+  if (state.paused || state.gameOver || state.rifleRecoil > 0) return;
+  state.rifleRecoil = 14;
+  state.shake = 0.22;
+
+  // Spawn high-velocity Ethiopian Winchester/Gras bullet tracer
+  const bullet = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.8, 6), mats.tracerMat);
+  bullet.rotation.x = Math.PI / 2;
+  bullet.position.set(playerRoot.position.x + 0.45, playerRoot.position.y + (state.mode === 'ON_FOOT' ? 2.1 : 3.5), playerRoot.position.z - 1.8);
+  scene.add(bullet);
+  playerBullets.push({ mesh: bullet, life: 45 });
+
+  spawnSparks(bullet.position.x, bullet.position.y, bullet.position.z, 0xffe066, 8);
 }
 
 function triggerJumpOrRemount() {
@@ -1417,7 +1744,7 @@ function triggerStanceToggle() {
     state.vy = 0.24;
     state.isJumping = true;
     syncModeHUD();
-    showBanner("INFANTRY CHARGE", "Fighting on the Rocks of Adwa");
+    showBanner("GROUND WARRIOR", "Sprinting on Foot — Use Shield & Shotel!");
   } else if (state.isJumping) {
     state.vy = -0.38;
   }
@@ -1431,13 +1758,13 @@ function triggerStrike() {
 
     if (state.mode === 'ST_GEORGE') {
       const boltGroup = new THREE.Group();
-      const core = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 6.5, 8), mats.lightningMat);
+      const core = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.16, 7.0, 8), mats.lightningMat);
       core.rotation.x = Math.PI / 2;
       boltGroup.add(core);
       boltGroup.position.set(playerRoot.position.x - 0.5, playerRoot.position.y + 6.5, playerRoot.position.z - 3);
       boltGroup.rotation.x = -0.18;
       scene.add(boltGroup);
-      spearBolts.push({ mesh: boltGroup, life: 50 });
+      spearBolts.push({ mesh: boltGroup, life: 55 });
     }
   }
 }
@@ -1448,7 +1775,7 @@ function activateSaintGeorge() {
   state.invincible = 65;
   state.shake = 0.85;
   stGeorgePhantom.visible = true;
-  stGeorgeLight.intensity = 4.0;
+  stGeorgeLight.intensity = 4.2;
   syncModeHUD();
   spawnSparks(playerRoot.position.x, 4.0, playerRoot.position.z, 0xffea70, 35);
   showBanner("SAINT GEORGE AWAKENED", "Qidus Giorgis Descends in Lightning Over Adwa!");
@@ -1464,7 +1791,7 @@ function syncModeHUD() {
 }
 
 function spawnSparks(x, y, z, colorHex, count = 18) {
-  const geo = new THREE.OctahedronGeometry(0.14, 0);
+  const geo = new THREE.OctahedronGeometry(0.15, 0);
   const mat = new THREE.MeshBasicMaterial({ color: colorHex });
   for (let i = 0; i < count; i++) {
     const m = new THREE.Mesh(geo, mat);
@@ -1472,16 +1799,99 @@ function spawnSparks(x, y, z, colorHex, count = 18) {
     scene.add(m);
     sparkParticles.push({
       mesh: m,
-      vx: (Math.random() - 0.5) * 0.55,
-      vy: Math.random() * 0.42 + 0.12,
-      vz: (Math.random() - 0.5) * 0.55,
+      vx: (Math.random() - 0.5) * 0.58,
+      vy: Math.random() * 0.45 + 0.12,
+      vz: (Math.random() - 0.5) * 0.58,
       life: 24
     });
   }
 }
 
+// Launch 75mm Mountain Cannon Artillery Shell with Red Target Ring on Ground
+function launchArtilleryShell(fromX, fromZ) {
+  const targetLane = LANES[Math.floor(Math.random() * LANES.length)];
+  const targetZ = -22 - Math.random() * 18;
+
+  const shellMesh = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 8), mats.gunMetal);
+  shellMesh.position.set(fromX, 1.8, fromZ);
+  scene.add(shellMesh);
+
+  const ringGeo = new THREE.RingGeometry(0.4, 2.2, 20);
+  ringGeo.rotateX(-Math.PI / 2);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0xff2200, transparent: true, opacity: 0.65, side: THREE.DoubleSide });
+  const targetRing = new THREE.Mesh(ringGeo, ringMat);
+  targetRing.position.set(targetLane, 0.15, targetZ);
+  scene.add(targetRing);
+
+  artilleryShells.push({
+    shellMesh,
+    targetRing,
+    startX: fromX,
+    startZ: fromZ,
+    targetX: targetLane,
+    targetZ,
+    progress: 0
+  });
+}
+
+// Spawn Lined Battle Formations (Firing Squads, Cavalry Lines & Artillery Batteries!)
+function spawnBattleFormation() {
+  const roll = Math.random();
+
+  if (roll < 0.28 && state.volleyTimer <= 0) {
+    // 1. LINED CARCANO FIRING SQUAD (4 Riflemen Abreast -> Triggers SHIELD WALL Scene!)
+    const squadLanes = [0, 1, 2, 3, 4].sort(() => Math.random() - 0.5).slice(0, 4);
+    squadLanes.forEach(lIdx => {
+      const inf = buildItalianUnit('INFANTRY');
+      inf.userData.isVolleySquad = true;
+      inf.userData.aimLaser.visible = true;
+      inf.position.set(LANES[lIdx], 0, -145);
+      scene.add(inf);
+      enemies.push(inf);
+    });
+    state.volleyTimer = 115; // Gives player ~1.9 seconds to hold SHIELD before the volley fires!
+    document.getElementById('volley-warning').style.display = 'block';
+    document.getElementById('vignette').classList.add('volley-danger');
+  } else if (roll < 0.55) {
+    // 2. LINED ITALIAN CAVALRY CHARGE (3 Horsemen Abreast)
+    const startLane = Math.floor(Math.random() * 3);
+    for (let i = 0; i < 3; i++) {
+      const cav = buildItalianUnit('CAVALRY');
+      cav.position.set(LANES[startLane + i], 0, -145 - (i % 2) * 4);
+      scene.add(cav);
+      enemies.push(cav);
+    }
+  } else if (roll < 0.8) {
+    // 3. 75MM MOUNTAIN CANNON BATTERY + INFANTRY ESCORT
+    const cLane = Math.floor(Math.random() * LANES.length);
+    const cannon = buildItalianUnit('CANNON_BATTERY');
+    cannon.position.set(LANES[cLane], 0, -145);
+    scene.add(cannon);
+    enemies.push(cannon);
+
+    const escortLane = (cLane + 1) % LANES.length;
+    const escort = buildItalianUnit('INFANTRY');
+    escort.position.set(LANES[escortLane], 0, -142);
+    scene.add(escort);
+    enemies.push(escort);
+  } else {
+    // 4. HOTCHKISS MACHINE-GUN EMPLACEMENT + FLANK CAVALRY
+    const mgLane = Math.floor(Math.random() * LANES.length);
+    const mg = buildItalianUnit('MACHINE_GUN');
+    mg.position.set(LANES[mgLane], 0, -145);
+    scene.add(mg);
+    enemies.push(mg);
+
+    const cavLane = (mgLane + 2) % LANES.length;
+    const cav = buildItalianUnit('CAVALRY');
+    cav.position.set(LANES[cavLane], 0, -145);
+    scene.add(cav);
+    enemies.push(cav);
+  }
+}
+
 // ============================================================================
-// 11. INPUT LISTENERS & AUTO-PAUSE
+// 11. INPUT LISTENERS (KEYBOARD, TOUCH, SHIELD HOLD & AUTO-PAUSE)
 // ============================================================================
 window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') moveLane(-1);
@@ -1489,8 +1899,14 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') triggerJumpOrRemount();
   if (e.code === 'ArrowDown' || e.code === 'KeyS') triggerStanceToggle();
   if (e.code === 'KeyF' || e.code === 'Enter') triggerStrike();
+  if (e.code === 'KeyG' || e.code === 'KeyQ') triggerRifleFire();
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyE') setShieldWall(true);
   if (e.code === 'KeyC') switchCameraPreference();
   if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyE') setShieldWall(false);
 });
 
 document.getElementById('btn-left').addEventListener('pointerdown', (e) => { e.preventDefault(); moveLane(-1); });
@@ -1498,6 +1914,12 @@ document.getElementById('btn-right').addEventListener('pointerdown', (e) => { e.
 document.getElementById('btn-jump').addEventListener('pointerdown', (e) => { e.preventDefault(); triggerJumpOrRemount(); });
 document.getElementById('btn-stance').addEventListener('pointerdown', (e) => { e.preventDefault(); triggerStanceToggle(); });
 document.getElementById('btn-attack').addEventListener('pointerdown', (e) => { e.preventDefault(); triggerStrike(); });
+document.getElementById('btn-fire').addEventListener('pointerdown', (e) => { e.preventDefault(); triggerRifleFire(); });
+
+const shieldBtn = document.getElementById('btn-shield');
+shieldBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); setShieldWall(true); });
+shieldBtn.addEventListener('pointerup', (e) => { e.preventDefault(); setShieldWall(false); });
+shieldBtn.addEventListener('pointerleave', (e) => { e.preventDefault(); setShieldWall(false); });
 
 let tStartX = 0, tStartY = 0;
 renderer.domElement.addEventListener('touchstart', (e) => {
@@ -1531,7 +1953,7 @@ window.addEventListener('resize', () => {
 });
 
 // ============================================================================
-// 12. MAIN RENDER LOOP POWERED BY ADWA_ANIMATIONS
+// 12. MAIN 3D TOTAL-WAR SIMULATION LOOP
 // ============================================================================
 let frame = 0;
 const tmpTip = new THREE.Vector3();
@@ -1542,11 +1964,15 @@ function animate() {
   if (state.paused || state.gameOver) return;
 
   frame++;
-  state.speed = Math.min(1.22, 0.68 + state.score * 0.00007);
+  const baseSpeed = Math.min(1.22, 0.68 + state.score * 0.00006);
+  state.speed = state.isShielding ? baseSpeed * 0.78 : baseSpeed;
   state.cycle += state.speed * 0.44;
   state.score += Math.floor(state.speed * 6);
   document.getElementById('score-display').textContent = state.score.toLocaleString();
 
+  if (state.rifleRecoil > 0) state.rifleRecoil--;
+
+  // Scroll Wide Soloda Valley Terrain
   terrainChunks.forEach(chunk => {
     chunk.position.z += state.speed;
     if (chunk.position.z > CHUNK_LEN) {
@@ -1554,26 +1980,32 @@ function animate() {
     }
   });
 
-  alliedWarriors.forEach(ally => {
-    const p = state.cycle * 1.3 + ally.userData.phase;
+  // Animate Allied Ethiopian Ridge Infantry & Cavalry Wings
+  alliedInfantry.forEach(ally => {
+    const p = state.cycle * 1.35 + ally.userData.phase;
     ally.userData.legs[0].rotation.x = Math.sin(p) * 0.75;
     ally.userData.legs[1].rotation.x = -Math.sin(p) * 0.75;
-    ally.position.y = 1.65 + Math.abs(Math.cos(p)) * 0.15;
+    ally.position.y = 1.0 + Math.abs(Math.cos(p)) * 0.16;
+  });
+
+  alliedCavalry.forEach(cav => {
+    window.ADWA_ANIMATIONS.applyHorseGallop(cav.userData.steed, state.cycle + cav.userData.phase, false);
   });
 
   dustClouds.forEach(d => {
     d.sprite.position.z += state.speed * 0.85;
     d.sprite.position.x += d.vx;
     if (d.sprite.position.z > 15) {
-      d.sprite.position.z = -125;
-      d.sprite.position.x = (Math.random() - 0.5) * 15;
+      d.sprite.position.z = -135;
+      d.sprite.position.x = (Math.random() - 0.5) * 24;
     }
   });
 
+  // Smooth 5-Lane Switching
   const targetX = LANES[currentLane];
   const dxLane = targetX - playerRoot.position.x;
   playerRoot.position.x += dxLane * 0.15;
-  playerRoot.rotation.z = -dxLane * 0.06;
+  playerRoot.rotation.z = -dxLane * 0.05;
 
   playerRoot.position.y += state.vy;
   if (playerRoot.position.y > 0) {
@@ -1584,30 +2016,45 @@ function animate() {
     state.isJumping = false;
   }
 
-  // Run Tailored Kabba Cloth Simulation from animations.js
-  window.ADWA_ANIMATIONS.updateKabbaCloth(tailoredKabba.capeGeo, tailoredKabba.origPos, state.cycle);
+  const isOnFoot = state.mode === 'ON_FOOT';
 
-  if (state.mode === 'ON_FOOT') {
-    heroSteed.root.position.x += (-2.2 - heroSteed.root.position.x) * 0.12;
+  // Update Dynamic Kabba Cloak (Tightens on foot; drapes over steed when mounted)
+  window.ADWA_ANIMATIONS.updateKabbaCloth(tailoredKabba.capeGeo, tailoredKabba.origPos, state.cycle, isOnFoot);
+
+  // Position Companion Steed vs Multi-Jointed Human Runner
+  if (isOnFoot) {
+    heroSteed.root.position.x += (-2.35 - heroSteed.root.position.x) * 0.12;
     riderGroup.position.x += (0.55 - riderGroup.position.x) * 0.12;
-    riderGroup.position.y += (0.85 + Math.abs(Math.sin(state.cycle * 1.4)) * 0.18 - riderGroup.position.y) * 0.22;
-    riderLegs[0].rotation.x = Math.sin(state.cycle * 1.5) * 0.85;
-    riderLegs[1].rotation.x = -Math.sin(state.cycle * 1.5) * 0.85;
   } else {
     heroSteed.root.position.x += (0 - heroSteed.root.position.x) * 0.15;
     riderGroup.position.x += (0 - riderGroup.position.x) * 0.15;
-    riderGroup.position.y += (2.55 + Math.sin(state.cycle) * 0.14 - riderGroup.position.y) * 0.25;
-    riderLegs[0].rotation.x = 0.28;
-    riderLegs[1].rotation.x = 0.28;
   }
 
-  // Run 4-Beat Equine Gallop & 3-Combo Sword Kinematics from animations.js
+  // Apply Multi-Jointed Human Biomechanics (Thigh -> Knee -> Calf -> Boot)
+  window.ADWA_ANIMATIONS.applyHumanLocomotion(
+    riderLegs,
+    riderGroup,
+    torsoPivot,
+    state.mode,
+    state.cycle,
+    state.isShielding
+  );
+
   window.ADWA_ANIMATIONS.applyHorseGallop(heroSteed, state.cycle, false);
 
+  // Apply Combat Kinematics (Shield Wall Block, Rifle Recoil, or 3-Combo Shotel Slash)
   if (state.slashProgress > 0) {
     state.slashProgress += 0.068;
     if (state.slashProgress >= 1.0) state.slashProgress = 0;
-    window.ADWA_ANIMATIONS.applySwordCombatIK(combatJoints, state.slashProgress, state.comboIndex, state.cycle);
+    window.ADWA_ANIMATIONS.applyCombatKinematics(
+      combatJoints,
+      state.slashProgress,
+      state.comboIndex,
+      state.cycle,
+      state.isShielding,
+      state.rifleRecoil,
+      isOnFoot
+    );
 
     shotelObj.tipNode.getWorldPosition(tmpTip);
     shotelObj.baseNode.getWorldPosition(tmpBase);
@@ -1615,7 +2062,15 @@ function animate() {
     if (trailPoints.length > TRAIL_MAX) trailPoints.pop();
     slashTrailMesh.visible = true;
   } else {
-    window.ADWA_ANIMATIONS.applySwordCombatIK(combatJoints, 0, state.comboIndex, state.cycle);
+    window.ADWA_ANIMATIONS.applyCombatKinematics(
+      combatJoints,
+      0,
+      state.comboIndex,
+      state.cycle,
+      state.isShielding,
+      state.rifleRecoil,
+      isOnFoot
+    );
     if (trailPoints.length > 0) trailPoints.pop();
     slashTrailMesh.visible = trailPoints.length > 2;
   }
@@ -1631,6 +2086,40 @@ function animate() {
     trailGeo.attributes.position.needsUpdate = true;
   }
 
+  // Handle Incoming Carcano Rifle Volley Countdown (The Shield Wall Scene!)
+  if (state.volleyTimer > 0) {
+    state.volleyTimer--;
+    if (state.volleyTimer === 0) {
+      document.getElementById('volley-warning').style.display = 'none';
+      document.getElementById('vignette').classList.remove('volley-danger');
+
+      // Hide laser sightlines & fire the synchronized volley!
+      enemies.forEach(e => {
+        if (e.userData.aimLaser) e.userData.aimLaser.visible = false;
+      });
+
+      if (state.isShielding || state.mode === 'ST_GEORGE' || state.isJumping) {
+        // Deflected off Menelik's Golden Gasha Shield!
+        state.shake = 0.48;
+        state.score += 450;
+        spawnSparks(playerRoot.position.x, playerRoot.position.y + 2.6, playerRoot.position.z - 1.2, 0xffd700, 28);
+        showBanner("VOLLEY DEFLECTED!", "Your Gasha Shield Blocked the Carcano Rifle Fire!");
+      } else if (state.invincible <= 0) {
+        state.hp -= 24;
+        state.invincible = 40;
+        state.shake = 0.78;
+        spawnSparks(playerRoot.position.x, playerRoot.position.y + 2.5, playerRoot.position.z, 0xd90429, 22);
+        document.getElementById('hp-fill').style.width = `${Math.max(0, state.hp)}%`;
+        showBanner("HIT BY RIFLE VOLLEY!", "Hold 🛡️ SHIELD When Red Sightlines Lock On!");
+        if (state.hp <= 0) {
+          triggerGameOver();
+          return;
+        }
+      }
+    }
+  }
+
+  // Update Overhead Saint George Apparition
   if (state.mode === 'ST_GEORGE') {
     state.stGeorgeTimer--;
     window.ADWA_ANIMATIONS.applyHorseGallop(phantomSteed, state.cycle * 1.15, true);
@@ -1666,17 +2155,15 @@ function animate() {
 
   if (state.invincible > 0) state.invincible--;
 
-  if (frame % Math.max(36, Math.floor(78 - state.speed * 28)) === 0) {
-    const laneIdx = Math.floor(Math.random() * 3);
-    const eMesh = buildRealisticEnemy(Math.random() > 0.45);
-    eMesh.position.set(LANES[laneIdx], 0, -135);
-    scene.add(eMesh);
-    enemies.push(eMesh);
+  // Spawn Lined Battle Formations
+  if (frame % Math.max(42, Math.floor(85 - state.speed * 30)) === 0) {
+    spawnBattleFormation();
   }
 
+  // Update Saint George Spear Bolts & Player Rifle Bullets
   for (let i = spearBolts.length - 1; i >= 0; i--) {
     const b = spearBolts[i];
-    b.mesh.position.z -= 2.8;
+    b.mesh.position.z -= 2.9;
     b.mesh.position.y = Math.max(1.2, b.mesh.position.y - 0.12);
     b.life--;
     if (b.life <= 0) {
@@ -1685,8 +2172,55 @@ function animate() {
     }
   }
 
-  const isStrikingNow = state.slashProgress >= 0.2 && state.slashProgress <= 0.78;
-  const strikeReachZ = state.mode === 'ST_GEORGE' ? 9.5 : 6.8;
+  for (let i = playerBullets.length - 1; i >= 0; i--) {
+    const b = playerBullets[i];
+    b.mesh.position.z -= 3.6;
+    b.life--;
+    if (b.life <= 0) {
+      scene.remove(b.mesh);
+      playerBullets.splice(i, 1);
+    }
+  }
+
+  // Update Parabolic 75mm Artillery Shells & Explosions
+  for (let i = artilleryShells.length - 1; i >= 0; i--) {
+    const sh = artilleryShells[i];
+    sh.progress += 0.022;
+    sh.targetZ += state.speed; // Target zone moves with scrolling terrain
+    sh.targetRing.position.z = sh.targetZ;
+
+    const t = sh.progress;
+    sh.shellMesh.position.x = window.ADWA_ANIMATIONS.lerp(sh.startX, sh.targetX, t);
+    sh.shellMesh.position.z = window.ADWA_ANIMATIONS.lerp(sh.startZ, sh.targetZ, t);
+    sh.shellMesh.position.y = 1.8 * (1 - t) + Math.sin(t * Math.PI) * 14.5;
+
+    if (t >= 1.0) {
+      // Artillery Shell Detonation!
+      spawnSparks(sh.targetX, 1.2, sh.targetZ, 0xff5500, 26);
+      state.shake = Math.max(state.shake, 0.55);
+
+      const dx = Math.abs(sh.targetX - playerRoot.position.x);
+      const dz = Math.abs(sh.targetZ - playerRoot.position.z);
+      if (dx < 2.5 && dz < 3.2 && state.invincible <= 0 && state.mode !== 'ST_GEORGE') {
+        const dmg = state.isShielding ? 8 : 26; // Shield absorbs most shrapnel!
+        state.hp -= dmg;
+        state.invincible = 35;
+        document.getElementById('hp-fill').style.width = `${Math.max(0, state.hp)}%`;
+        if (state.hp <= 0) {
+          triggerGameOver();
+          return;
+        }
+      }
+
+      scene.remove(sh.shellMesh);
+      scene.remove(sh.targetRing);
+      artilleryShells.splice(i, 1);
+    }
+  }
+
+  // Update Enemy Ranks, Cannon Firing & Combat Collisions
+  const isStrikingNow = state.slashProgress >= 0.18 && state.slashProgress <= 0.8;
+  const strikeReachZ = state.mode === 'ST_GEORGE' ? 9.8 : 7.0;
 
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
@@ -1707,40 +2241,57 @@ function animate() {
 
     e.position.z += state.speed * e.userData.speedMult;
 
-    if (e.userData.isCavalry) {
+    if (e.userData.unitType === 'CAVALRY') {
       window.ADWA_ANIMATIONS.applyHorseGallop(e.userData.horse, state.cycle * 1.15 + i, false);
       e.userData.saberArm.rotation.x = -0.7 + Math.sin(state.cycle * 1.5) * 0.25;
-    } else {
+    } else if (e.userData.unitType === 'INFANTRY') {
       e.userData.infantryLegs[0].rotation.x = Math.sin(state.cycle * 1.4 + i) * 0.65;
       e.userData.infantryLegs[1].rotation.x = -Math.sin(state.cycle * 1.4 + i) * 0.65;
+    } else if (e.userData.unitType === 'CANNON_BATTERY' && !e.userData.hasFiredShell && e.position.z > -115) {
+      e.userData.hasFiredShell = true;
+      spawnSparks(e.position.x, 1.4, e.position.z + 1.2, 0xffaa00, 14);
+      launchArtilleryShell(e.position.x, e.position.z);
+    } else if (e.userData.unitType === 'MACHINE_GUN' && frame % 16 === 0 && e.position.z > -95 && e.position.z < -15) {
+      spawnSparks(e.position.x, 1.2, e.position.z + 1.0, 0xffee77, 4);
     }
 
     const dx = Math.abs(e.position.x - playerRoot.position.x);
     const dz = Math.abs(e.position.z - playerRoot.position.z);
 
-    let boltHit = false;
+    // Check Spear Bolt or Rifle Bullet Hit
+    let projectileHit = false;
     for (let j = spearBolts.length - 1; j >= 0; j--) {
       if (Math.abs(spearBolts[j].mesh.position.x - e.position.x) < 2.8 &&
-          Math.abs(spearBolts[j].mesh.position.z - e.position.z) < 4.0) {
-        boltHit = true;
+          Math.abs(spearBolts[j].mesh.position.z - e.position.z) < 4.2) {
+        projectileHit = true;
+        break;
+      }
+    }
+    for (let j = playerBullets.length - 1; j >= 0; j--) {
+      if (Math.abs(playerBullets[j].mesh.position.x - e.position.x) < 1.8 &&
+          Math.abs(playerBullets[j].mesh.position.z - e.position.z) < 3.0) {
+        projectileHit = true;
+        scene.remove(playerBullets[j].mesh);
+        playerBullets.splice(j, 1);
         break;
       }
     }
 
-    const meleeHit = isStrikingNow && dx < 2.6 && e.position.z < 1.8 && e.position.z > -strikeReachZ;
-    const georgeAuraHit = state.mode === 'ST_GEORGE' && dx < 2.3 && dz < 3.6;
+    const meleeHit = isStrikingNow && dx < 2.75 && e.position.z < 2.0 && e.position.z > -strikeReachZ;
+    const georgeAuraHit = state.mode === 'ST_GEORGE' && dx < 2.5 && dz < 3.8;
 
-    if (boltHit || meleeHit || georgeAuraHit) {
+    if (projectileHit || meleeHit || georgeAuraHit) {
+      if (e.userData.aimLaser) e.userData.aimLaser.visible = false;
       e.userData.ragdoll = true;
       e.userData.vx = (e.position.x >= playerRoot.position.x ? 1 : -1) * (0.28 + Math.random() * 0.25);
-      e.userData.vy = 0.38 + Math.random() * 0.2;
-      e.userData.vz = -0.35;
-      e.userData.rx = (Math.random() - 0.5) * 0.28;
-      e.userData.rz = (Math.random() - 0.5) * 0.28;
+      e.userData.vy = 0.38 + Math.random() * 0.22;
+      e.userData.vz = -0.38;
+      e.userData.rx = (Math.random() - 0.5) * 0.3;
+      e.userData.rz = (Math.random() - 0.5) * 0.3;
 
       spawnSparks(e.position.x, 2.4, e.position.z, state.mode === 'ST_GEORGE' ? 0xffe066 : 0xff4d1a, 20);
       state.kills++;
-      state.score += 300;
+      state.score += 350;
       state.shake = 0.42;
       document.getElementById('kill-counter').textContent = `Vanquished: ${state.kills}`;
 
@@ -1754,16 +2305,26 @@ function animate() {
       continue;
     }
 
+    // Direct Collision with Enemy Unit
     if (dx < 1.65 && dz < 2.1 && playerRoot.position.y < 1.8 && state.invincible <= 0) {
-      state.hp -= 22;
-      state.invincible = 42;
-      state.shake = 0.72;
-      spawnSparks(playerRoot.position.x, 2.5, playerRoot.position.z, 0xd90429, 16);
-      document.getElementById('hp-fill').style.width = `${Math.max(0, state.hp)}%`;
+      if (state.isShielding && e.userData.unitType === 'INFANTRY') {
+        // Shield-Bash Infantry out of the way!
+        e.userData.ragdoll = true;
+        e.userData.vy = 0.32;
+        e.userData.vz = -0.45;
+        spawnSparks(e.position.x, 2.0, e.position.z, 0xffd700, 14);
+        state.score += 150;
+      } else {
+        state.hp -= 22;
+        state.invincible = 42;
+        state.shake = 0.72;
+        spawnSparks(playerRoot.position.x, 2.5, playerRoot.position.z, 0xd90429, 16);
+        document.getElementById('hp-fill').style.width = `${Math.max(0, state.hp)}%`;
 
-      if (state.hp <= 0) {
-        triggerGameOver();
-        return;
+        if (state.hp <= 0) {
+          triggerGameOver();
+          return;
+        }
       }
     }
 
@@ -1786,11 +2347,12 @@ function animate() {
     }
   }
 
+  // Smooth Camera Interpolation (Supports HERO 3/4, EAGLE EYE, WIDE EPIC, CLOSE GTA & 1ST PERSON)
   if (state.shake > 0.01) state.shake *= 0.84;
   else state.shake = 0;
 
   const preset = CAMERA_PRESETS[currentCamIndex];
-  const camTargetX = playerRoot.position.x * 0.72 + preset.offsetX + (Math.random() - 0.5) * state.shake;
+  const camTargetX = playerRoot.position.x * (preset.name === 'EAGLE EYE' ? 0.35 : 0.72) + preset.offsetX + (Math.random() - 0.5) * state.shake;
   const camTargetY = preset.offsetY + playerRoot.position.y * 0.38 + (Math.random() - 0.5) * state.shake;
   const camTargetZ = preset.offsetZ;
 
@@ -1814,6 +2376,7 @@ function animate() {
 
 function triggerGameOver() {
   state.gameOver = true;
+  document.getElementById('volley-warning').style.display = 'none';
   document.getElementById('final-summary').textContent =
     `Adwa Glory Score: ${state.score.toLocaleString()} | Enemy Forces Vanquished: ${state.kills}`;
   document.getElementById('gameover-modal').style.display = 'flex';
@@ -1824,14 +2387,19 @@ document.getElementById('restart-btn').addEventListener('click', () => {
   enemies.length = 0;
   spearBolts.forEach(b => scene.remove(b.mesh));
   spearBolts.length = 0;
+  playerBullets.forEach(b => scene.remove(b.mesh));
+  playerBullets.length = 0;
+  artilleryShells.forEach(s => { scene.remove(s.shellMesh); scene.remove(s.targetRing); });
+  artilleryShells.length = 0;
 
   state.hp = 100;
   state.score = 0;
   state.kills = 0;
   state.strikeCharge = 0;
+  state.volleyTimer = 0;
   state.mode = 'MOUNTED';
   state.gameOver = false;
-  currentLane = 1;
+  currentLane = 2;
   stGeorgePhantom.visible = false;
   stGeorgeLight.intensity = 0;
 
